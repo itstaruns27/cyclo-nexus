@@ -1,0 +1,17 @@
+[Unit]
+Description=CYCLO-NEXUS inference service (FastAPI, CPU)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__APP_USER__
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=/etc/cyclonexus/pipeline.env
+# Bound to localhost: only the co-located pipeline calls it
+ExecStart=__APP_DIR__/.venv/bin/uvicorn inference.serve:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=10
+MemoryMax=12G
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=CYCLO-NEXUS live satellite pipeline (MOSDAC + NASA IMERG, every 30 min)
+After=network-online.target cyclonexus-inference.service
+Wants=network-online.target
+
+[Service]
+User=__APP_USER__
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=/etc/cyclonexus/pipeline.env
+ExecStart=__APP_DIR__/.venv/bin/python -u -W ignore -m data_pipeline.ingestion.live_pipeline_runner --interval-minutes 30
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

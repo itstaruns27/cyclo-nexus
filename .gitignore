@@ -1,0 +1,90 @@
+# ═══════════════════════════════════════════════
+# CYCLO-NEXUS .gitignore
+# ═══════════════════════════════════════════════
+
+# ── Python ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# ── Node.js ─────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Build Outputs ───────────────────────────────
+frontend/dist/
+backend/dist/
+*.tsbuildinfo
+
+# ── Environment & Secrets ───────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+*.pem
+*.key
+
+# ── ML Model Weights ───────────────────────────
+*.pt
+*.pth
+*.onnx
+*.torchscript
+weights/
+runs/
+wandb/
+
+# ── Data & Rasters (large files) ────────────────
+*.h5
+*.hdf5
+*.nc
+*.nc4
+*.tif
+*.tiff
+*.geotiff
+data_pipeline/raw/
+data_pipeline/processed/
+
+# ── IDE & OS ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Jupyter Notebooks (outputs only) ────────────
+.ipynb_checkpoints/
+
+# ── Coverage & Testing ─────────────────────────
+coverage/
+.nyc_output/
+htmlcov/
+.pytest_cache/
+
+# Runtime data (satellite granules, frame caches, validation windows, reference downloads)
+data/live/
+data/validation/
+data/training/
+data/static/
+data/jaxa/
+backend/cache/
+
+# ── Slide deck build leftovers ──
+docs/ppt/build/
+docs/ppt/render_new/
+docs/ppt/render_orig/
+docs/ppt/_skill_scripts/
+docs/ppt/assets/gen/

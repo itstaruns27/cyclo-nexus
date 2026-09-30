@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyclo-nexus.internal/schemas/geojson_spec.json",
+  "title": "CYCLO-NEXUS GeoJSON Inter-Service Payload",
+  "description": "RFC 7946 compliant GeoJSON FeatureCollection for cyclone track, forecast cone, and detection overlays. Transmitted from Colab worker to Hostinger webhook and from Hostinger API to frontend PWA.",
+  "type": "object",
+  "required": ["type", "metadata", "features"],
+  "properties": {
+    "type": {
+      "const": "FeatureCollection"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["payload_version", "cyclone_id", "generated_at", "basin"],
+      "properties": {
+        "payload_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "cyclone_id": { "type": "string", "minLength": 3 },
+        "cyclone_name": { "type": ["string", "null"] },
+        "basin": { "type": "string", "enum": ["NIO", "BOB", "AS"] },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": {
+            "type": "object",
+            "required": ["type", "coordinates"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Point", "LineString", "Polygon", "MultiPoint"]
+              },
+              "coordinates": {}
+            }
+          },
+          "properties": {
+            "type": "object",
+            "required": ["feature_type"],
+            "properties": {
+              "feature_type": {
+                "type": "string",
+                "enum": [
+                  "current_eye",
+                  "historical_track",
+                  "forecast_track",
+                  "forecast_cone",
+                  "obb_outline",
+                  "gradcam_bounds"
+                ]
+              },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "forecast_hour": { "type": "integer", "enum": [6, 12, 24, 48, 72] },
+              "imd_category": {
+                "type": "string",
+                "enum": ["D", "DD", "CS", "SCS", "VSCS", "ESCS", "SuCS"]
+              },
+              "sustained_wind_kmh": { "type": "number", "minimum": 0 },
+              "sustained_wind_knots": { "type": "number", "minimum": 0 },
+              "central_pressure_hpa": { "type": "number", "minimum": 870, "maximum": 1020 },
+              "eye_diameter_km": { "type": "number", "minimum": 0 },
+              "detection_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "obb_params": {
+                "type": "object",
+                "properties": {
+                  "x_center": { "type": "number" },
+                  "y_center": { "type": "number" },
+                  "width": { "type": "number" },
+                  "height": { "type": "number" },
+                  "theta": { "type": "number" }
+                }
+              },
+              "sigma_lat": { "type": "number", "minimum": 0 },
+              "sigma_lon": { "type": "number", "minimum": 0 },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "gradcam_heatmap_uri": { "type": "string", "format": "uri" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

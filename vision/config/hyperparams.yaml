@@ -1,0 +1,20 @@
+# YOLO-OBB Hyperparameters — Optimized for Colab T4 (15GB VRAM)
+# Owner: Agent BRAVO
+
+model: yolov8m-obb.pt    # Medium model — fits T4 memory budget
+epochs: 100
+batch: 8                  # Conservative for T4 15GB VRAM
+imgsz: 1024
+lr0: 0.01
+lrf: 0.001
+momentum: 0.937
+weight_decay: 0.0005
+warmup_epochs: 3
+warmup_momentum: 0.8
+box: 7.5
+cls: 0.5
+dfl: 1.5
+close_mosaic: 10
+patience: 20
+workers: 2                # Colab has limited CPU
+device: 0                 # Single T4 GPU

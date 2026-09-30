@@ -1,0 +1,156 @@
+{
+  "note": "Approximate recorded impacts of major North Indian Ocean cyclones, compiled from the Wikipedia summaries of IMD, NDMA and national government reports. Damage was reported in US dollars of the event year and is converted to rupees at that year's average USD/INR rate (RBI reference rate), without adjusting for inflation. Figures vary between sources — verify against official reports before any official use.",
+  "storms": [
+    {
+      "sid": "1999298N12099",
+      "name": "Odisha Super Cyclone",
+      "season": 1999,
+      "countries": [
+        "India"
+      ],
+      "deaths": 9887,
+      "damage_usd": 4440000000.0,
+      "source": "https://en.wikipedia.org/wiki/1999_Odisha_cyclone",
+      "usd_inr": 43.1,
+      "damage_inr": 191364000000
+    },
+    {
+      "sid": "2007314N10093",
+      "name": "SIDR",
+      "season": 2007,
+      "countries": [
+        "Bangladesh"
+      ],
+      "deaths": 3447,
+      "damage_usd": 2310000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Sidr",
+      "deaths_note": "3,447 confirmed; some estimates up to 15,000",
+      "usd_inr": 41.3,
+      "damage_inr": 95403000000
+    },
+    {
+      "sid": "2008117N11090",
+      "name": "NARGIS",
+      "season": 2008,
+      "countries": [
+        "Myanmar"
+      ],
+      "deaths": 138373,
+      "damage_usd": 12900000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Nargis",
+      "usd_inr": 43.5,
+      "damage_inr": 561150000000
+    },
+    {
+      "sid": "2013281N12098",
+      "name": "PHAILIN",
+      "season": 2013,
+      "countries": [
+        "India"
+      ],
+      "deaths": 45,
+      "damage_usd": 4260000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Phailin",
+      "evacuated": 1000000,
+      "usd_inr": 58.6,
+      "damage_inr": 249636000000
+    },
+    {
+      "sid": "2014279N11096",
+      "name": "HUDHUD",
+      "season": 2014,
+      "countries": [
+        "India"
+      ],
+      "deaths": 124,
+      "damage_usd": 3580000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Hudhud",
+      "usd_inr": 61.0,
+      "damage_inr": 218380000000
+    },
+    {
+      "sid": "2017333N06082",
+      "name": "OCKHI",
+      "season": 2017,
+      "countries": [
+        "India",
+        "Sri Lanka"
+      ],
+      "deaths": 318,
+      "damage_usd": 920000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Ockhi",
+      "deaths_note": "includes fishermen reported missing",
+      "usd_inr": 65.1,
+      "damage_inr": 59892000000
+    },
+    {
+      "sid": "2018314N12093",
+      "name": "GAJA",
+      "season": 2018,
+      "countries": [
+        "India"
+      ],
+      "deaths": 52,
+      "damage_usd": 775000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Gaja",
+      "usd_inr": 68.4,
+      "damage_inr": 53010000000
+    },
+    {
+      "sid": "2019116N02090",
+      "name": "FANI",
+      "season": 2019,
+      "countries": [
+        "India",
+        "Bangladesh"
+      ],
+      "deaths": 89,
+      "damage_usd": 8100000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Fani",
+      "evacuated": 1200000,
+      "usd_inr": 70.4,
+      "damage_inr": 570240000000
+    },
+    {
+      "sid": "2020136N10088",
+      "name": "AMPHAN",
+      "season": 2020,
+      "countries": [
+        "India",
+        "Bangladesh"
+      ],
+      "deaths": 128,
+      "damage_usd": 13700000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Amphan",
+      "usd_inr": 74.1,
+      "damage_inr": 1015170000000
+    },
+    {
+      "sid": "2021133N10071",
+      "name": "TAUKTAE",
+      "season": 2021,
+      "countries": [
+        "India"
+      ],
+      "deaths": 174,
+      "damage_usd": 2100000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Tauktae",
+      "usd_inr": 73.9,
+      "damage_inr": 155190000000
+    },
+    {
+      "sid": "2021143N15090",
+      "name": "YAAS",
+      "season": 2021,
+      "countries": [
+        "India",
+        "Bangladesh"
+      ],
+      "deaths": 20,
+      "damage_usd": 2840000000.0,
+      "source": "https://en.wikipedia.org/wiki/Cyclone_Yaas",
+      "usd_inr": 73.9,
+      "damage_inr": 209876000000
+    }
+  ]
+}

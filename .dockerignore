@@ -1,0 +1,16 @@
+# Keep the inference image small: only inference/, forecaster/ and vision/weights/ are copied
+.git
+.venv
+**/__pycache__
+**/*.pyc
+**/node_modules
+frontend
+backend
+data
+datasets
+colab_notebooks
+docs
+tests
+fixtures
+data_pipeline
+**/.env

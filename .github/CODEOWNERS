@@ -1,0 +1,18 @@
+# CODEOWNERS — CYCLO-NEXUS Agent Ownership Enforcement
+# Only the owning agent's branch can modify these paths.
+
+/schemas/                   @architect
+/fixtures/                  @architect @alpha-agent
+/data_pipeline/             @alpha-agent
+/vision/                    @bravo-agent
+/forecaster/                @charlie-agent
+/colab_notebooks/01*        @alpha-agent
+/colab_notebooks/02*        @bravo-agent
+/colab_notebooks/03*        @bravo-agent
+/colab_notebooks/04*        @charlie-agent
+/colab_notebooks/05*        @charlie-agent
+/colab_notebooks/06*        @charlie-agent
+/colab_notebooks/07*        @architect
+/backend/                   @delta-agent
+/frontend/                  @echo-agent
+/docs/                      @architect

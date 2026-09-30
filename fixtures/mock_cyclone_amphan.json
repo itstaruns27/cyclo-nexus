@@ -1,0 +1,129 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "payload_version": "1.0.0",
+    "cyclone_id": "BOB_01_2020",
+    "cyclone_name": "AMPHAN",
+    "basin": "BOB",
+    "generated_at": "2020-05-18T12:00:00Z"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [87.2, 16.8]
+      },
+      "properties": {
+        "feature_type": "current_eye",
+        "timestamp": "2020-05-18T12:00:00Z",
+        "imd_category": "SuCS",
+        "sustained_wind_kmh": 240,
+        "sustained_wind_knots": 130,
+        "central_pressure_hpa": 920,
+        "eye_diameter_km": 32,
+        "detection_confidence": 0.94,
+        "obb_params": {
+          "x_center": 87.2,
+          "y_center": 16.8,
+          "width": 3.8,
+          "height": 3.2,
+          "theta": 0.35
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [85.5, 12.1],
+          [85.9, 13.0],
+          [86.3, 13.9],
+          [86.7, 14.8],
+          [87.0, 15.8],
+          [87.2, 16.8]
+        ]
+      },
+      "properties": {
+        "feature_type": "historical_track",
+        "timestamps": [
+          "2020-05-17T21:00:00Z",
+          "2020-05-18T00:00:00Z",
+          "2020-05-18T03:00:00Z",
+          "2020-05-18T06:00:00Z",
+          "2020-05-18T09:00:00Z",
+          "2020-05-18T12:00:00Z"
+        ],
+        "imd_categories": ["ESCS", "ESCS", "SuCS", "SuCS", "SuCS", "SuCS"],
+        "wind_speeds_kmh": [180, 195, 222, 230, 235, 240]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [87.5, 17.8],
+          [87.8, 19.0],
+          [88.2, 20.5],
+          [88.5, 21.8],
+          [88.7, 22.5]
+        ]
+      },
+      "properties": {
+        "feature_type": "forecast_track",
+        "forecast_hours": [6, 12, 24, 48, 72],
+        "predicted_imd_categories": ["SuCS", "ESCS", "VSCS", "SCS", "CS"],
+        "predicted_wind_speeds_kmh": [235, 200, 160, 100, 75],
+        "predicted_pressures_hpa": [922, 940, 958, 980, 995],
+        "sigma_lats": [0.15, 0.3, 0.6, 1.1, 1.8],
+        "sigma_lons": [0.12, 0.25, 0.5, 0.9, 1.5],
+        "confidences": [0.92, 0.87, 0.78, 0.62, 0.48]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [87.38, 17.95], [87.55, 18.05],
+          [88.05, 19.25], [88.30, 19.50],
+          [88.70, 21.10], [89.00, 21.30],
+          [89.40, 22.90], [89.60, 23.10],
+          [90.20, 24.30], [89.80, 24.50],
+          [88.00, 22.30], [87.60, 22.10],
+          [87.30, 20.50], [87.10, 20.30],
+          [86.80, 18.80], [86.95, 18.50],
+          [87.38, 17.95]
+        ]]
+      },
+      "properties": {
+        "feature_type": "forecast_cone",
+        "max_forecast_hour": 72,
+        "cone_confidence_level": 0.67
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [85.72, 17.90],
+          [88.68, 17.90],
+          [88.68, 15.70],
+          [85.72, 15.70],
+          [85.72, 17.90]
+        ]]
+      },
+      "properties": {
+        "feature_type": "gradcam_bounds",
+        "gradcam_heatmap_uri": "/assets/gradcam/BOB_01_2020_ch0_20200518T1200.webp",
+        "target_layer": "model.backbone.stage4.block2.conv",
+        "channel_index": 0,
+        "min_activation": 0.02,
+        "max_activation": 0.97
+      }
+    }
+  ]
+}

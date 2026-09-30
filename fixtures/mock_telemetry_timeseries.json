@@ -1,0 +1,159 @@
+{
+  "payload_version": "1.0.0",
+  "cyclone_id": "BOB_01_2020",
+  "cyclone_name": "AMPHAN",
+  "basin": "BOB",
+  "generated_at": "2020-05-18T12:00:00Z",
+  "current_state": {
+    "timestamp": "2020-05-18T12:00:00Z",
+    "latitude": 16.8,
+    "longitude": 87.2,
+    "sustained_wind_kmh": 240,
+    "sustained_wind_knots": 130,
+    "central_pressure_hpa": 920,
+    "environmental_pressure_hpa": 1010,
+    "imd_category": "SuCS"
+  },
+  "obb": {
+    "x_center": 87.2,
+    "y_center": 16.8,
+    "width": 3.8,
+    "height": 3.2,
+    "theta": 0.35
+  },
+  "eye_metrics": {
+    "eye_diameter_km": 32,
+    "eyewall_thickness_km": 18,
+    "eye_symmetry_score": 0.82
+  },
+  "detection_confidence": 0.94,
+  "historical_track": [
+    {
+      "timestamp": "2020-05-17T21:00:00Z",
+      "latitude": 12.1,
+      "longitude": 85.5,
+      "sustained_wind_kmh": 180,
+      "sustained_wind_knots": 97,
+      "central_pressure_hpa": 945,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "ESCS"
+    },
+    {
+      "timestamp": "2020-05-18T00:00:00Z",
+      "latitude": 13.0,
+      "longitude": 85.9,
+      "sustained_wind_kmh": 195,
+      "sustained_wind_knots": 105,
+      "central_pressure_hpa": 938,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "ESCS"
+    },
+    {
+      "timestamp": "2020-05-18T03:00:00Z",
+      "latitude": 13.9,
+      "longitude": 86.3,
+      "sustained_wind_kmh": 222,
+      "sustained_wind_knots": 120,
+      "central_pressure_hpa": 928,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "SuCS"
+    },
+    {
+      "timestamp": "2020-05-18T06:00:00Z",
+      "latitude": 14.8,
+      "longitude": 86.7,
+      "sustained_wind_kmh": 230,
+      "sustained_wind_knots": 124,
+      "central_pressure_hpa": 924,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "SuCS"
+    },
+    {
+      "timestamp": "2020-05-18T09:00:00Z",
+      "latitude": 15.8,
+      "longitude": 87.0,
+      "sustained_wind_kmh": 235,
+      "sustained_wind_knots": 127,
+      "central_pressure_hpa": 922,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "SuCS"
+    },
+    {
+      "timestamp": "2020-05-18T12:00:00Z",
+      "latitude": 16.8,
+      "longitude": 87.2,
+      "sustained_wind_kmh": 240,
+      "sustained_wind_knots": 130,
+      "central_pressure_hpa": 920,
+      "environmental_pressure_hpa": 1010,
+      "imd_category": "SuCS"
+    }
+  ],
+  "forecast_track": [
+    {
+      "forecast_hour": 6,
+      "predicted_lat": 17.8,
+      "predicted_lon": 87.5,
+      "predicted_wind_kmh": 235,
+      "predicted_pressure_hpa": 922,
+      "predicted_imd_category": "SuCS",
+      "sigma_lat": 0.15,
+      "sigma_lon": 0.12,
+      "confidence": 0.92
+    },
+    {
+      "forecast_hour": 12,
+      "predicted_lat": 19.0,
+      "predicted_lon": 87.8,
+      "predicted_wind_kmh": 200,
+      "predicted_pressure_hpa": 940,
+      "predicted_imd_category": "ESCS",
+      "sigma_lat": 0.3,
+      "sigma_lon": 0.25,
+      "confidence": 0.87
+    },
+    {
+      "forecast_hour": 24,
+      "predicted_lat": 20.5,
+      "predicted_lon": 88.2,
+      "predicted_wind_kmh": 160,
+      "predicted_pressure_hpa": 958,
+      "predicted_imd_category": "VSCS",
+      "sigma_lat": 0.6,
+      "sigma_lon": 0.5,
+      "confidence": 0.78
+    },
+    {
+      "forecast_hour": 48,
+      "predicted_lat": 21.8,
+      "predicted_lon": 88.5,
+      "predicted_wind_kmh": 100,
+      "predicted_pressure_hpa": 980,
+      "predicted_imd_category": "SCS",
+      "sigma_lat": 1.1,
+      "sigma_lon": 0.9,
+      "confidence": 0.62
+    },
+    {
+      "forecast_hour": 72,
+      "predicted_lat": 22.5,
+      "predicted_lon": 88.7,
+      "predicted_wind_kmh": 75,
+      "predicted_pressure_hpa": 995,
+      "predicted_imd_category": "CS",
+      "sigma_lat": 1.8,
+      "sigma_lon": 1.5,
+      "confidence": 0.48
+    }
+  ],
+  "gradcam": [
+    {
+      "heatmap_uri": "/assets/gradcam/BOB_01_2020_ch0_20200518T1200.webp",
+      "target_layer": "model.backbone.stage4.block2.conv",
+      "channel_index": 0,
+      "min_activation": 0.02,
+      "max_activation": 0.97,
+      "timestamp": "2020-05-18T12:00:00Z"
+    }
+  ]
+}

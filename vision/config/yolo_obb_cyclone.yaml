@@ -1,0 +1,19 @@
+# YOLO-OBB Cyclone Dataset Config
+# Owner: Agent BRAVO
+
+path: /content/drive/MyDrive/cyclo-nexus/data/yolo_obb
+train: images/train
+val: images/val
+test: images/test
+
+# IMD 7-tier classes
+names:
+  0: D      # Depression (31-49 km/h)
+  1: DD     # Deep Depression (50-61 km/h)
+  2: CS     # Cyclonic Storm (62-88 km/h)
+  3: SCS    # Severe Cyclonic Storm (89-117 km/h)
+  4: VSCS   # Very Severe Cyclonic Storm (118-166 km/h)
+  5: ESCS   # Extremely Severe Cyclonic Storm (167-221 km/h)
+  6: SuCS   # Super Cyclonic Storm (≥222 km/h)
+
+nc: 7
