@@ -88,3 +88,25 @@ docs/ppt/render_new/
 docs/ppt/render_orig/
 docs/ppt/_skill_scripts/
 docs/ppt/assets/gen/
+
+# ── Not part of the software (kept locally) ──
+/.agents
+/.claude
+/AI_AGENT_SKILLS_DIRECTIVE.md
+/skill02.md
+/archive
+/cyclo-nexus-blueprint-v2.md
+/masterplan.md
+/masterplan_v4.md
+/verify_task_1_1.py
+/verify_phase1_e2e.py
+/details_ref.md
+/datasets
+/docs/ppt
+/docs/agent_guardrails.md
+/docs/audit_report_phase1_3.md
+/docs/audit_report_v2.md
+/docs/comprehensive_platform_upgrade_plan.md
+/docs/pre_training_audit_analysis.md
+/docs/detailed_documentation.md
+/fixtures/mock_gemini_bulletin.json
