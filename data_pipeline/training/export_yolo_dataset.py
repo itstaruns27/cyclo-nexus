@@ -1,11 +1,14 @@
 """
-Export the real-imagery training set to Ultralytics YOLO-OBB format (master plan v4, Task 3.4)
-═════════════════════════════════════════════════════════════════════════════════════════════
-Images: channels [TIR1, WV, split-window] of each (4, 1024, 1024) frame as an 8-bit RGB PNG —
-exactly what inference/serve.py feeds YOLO (tensor[-1][:3]).
-Labels: one axis-aligned oriented box per best-track point, centred on the official circulation
-centre, side length by IMD grade (D/DD 3°, CS/SCS 4°, VSCS+ 5°). Negatives get empty label files.
-Split: seasons >= --val-from go to val (no storm appears in both splits).
+Export the unified real-imagery set to Ultralytics YOLO-OBB format (master plan v4, Task 3.4)
+════════════════════════════════════════════════════════════════════════════════════════════
+Input : data/training/store/*.npz (4, 512, 512) uint8 frames + data/training/frames.jsonl labels
+        (python -m data_pipeline.training.build_unified_set label).
+Images: channels [TIR1, WV, split-window] as an 8-bit RGB PNG — what inference/serve.py feeds YOLO
+        (tensor[-1][:3], downsampled to 512²).
+Labels: one box per system with IMD grade ≥ D, centred on the official best-track centre, side by
+        grade (D/DD 3°, CS/SCS 4°, VSCS+ 5°). Frames whose only system is a low-pressure area are
+        skipped: they are neither a clear positive nor a clean negative.
+Split : seasons >= --val-from go to val (whole storms are held out, nothing leaks across splits).
 
   python -m data_pipeline.training.export_yolo_dataset --val-from 2024
 Produces data/training/yolo/{images,labels}/{train,val} and data/training/yolo/data.yaml.
@@ -13,6 +16,7 @@ Produces data/training/yolo/{images,labels}/{train,val} and data/training/yolo/d
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -43,23 +47,31 @@ def main():
     args = ap.parse_args()
 
     out = TRAIN / "yolo"
-    rows = [json.loads(l) for l in (TRAIN / "manifest.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    if out.exists():
+        shutil.rmtree(out)
+    rows = [json.loads(l) for l in (TRAIN / "frames.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     counts = {"train": [0, 0], "val": [0, 0]}
+    skipped = 0
     for r in rows:
+        systems = [s for s in r["systems"] if s["grade"] in SIZE_DEG]
+        if r["systems"] and not systems:
+            skipped += 1
+            continue
         split = "val" if int(r["time"][:4]) >= args.val_from else "train"
         (out / "images" / split).mkdir(parents=True, exist_ok=True)
         (out / "labels" / split).mkdir(parents=True, exist_ok=True)
-        tensor = np.load(TRAIN / "frames" / r["frame"])["tensor"]
-        rgb = (np.clip(tensor[:3], 0, 1) * 255).round().astype(np.uint8).transpose(1, 2, 0)
-        Image.fromarray(rgb).save(out / "images" / split / f"{r['key']}.png")
-        label = obb_label(r["lat"], r["lon"], r["grade"]) + "\n" if r["sid"] else ""
-        (out / "labels" / split / f"{r['key']}.txt").write_text(label)
-        counts[split][0 if r["sid"] else 1] += 1
+        with np.load(TRAIN / "store" / f"{r['frame']}.npz", allow_pickle=False) as z:
+            rgb = z["x"][:3].transpose(1, 2, 0)
+        Image.fromarray(np.ascontiguousarray(rgb)).save(out / "images" / split / f"{r['frame']}.png")
+        (out / "labels" / split / f"{r['frame']}.txt").write_text(
+            "".join(obb_label(s["lat"], s["lon"], s["grade"]) + "\n" for s in systems))
+        counts[split][0 if systems else 1] += 1
 
     (out / "data.yaml").write_text(
         f"path: {out.as_posix()}\ntrain: images/train\nval: images/val\nnames:\n  0: tropical_cyclone\n")
-    print(f"train: {counts['train'][0]} positive / {counts['train'][1]} negative; "
-          f"val: {counts['val'][0]} positive / {counts['val'][1]} negative → {out}")
+    print(f"train: {counts['train'][0]} with storms / {counts['train'][1]} empty; "
+          f"val: {counts['val'][0]} with storms / {counts['val'][1]} empty; "
+          f"{skipped} low-pressure-only frames skipped → {out}")
 
 
 if __name__ == "__main__":

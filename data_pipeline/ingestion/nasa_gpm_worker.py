@@ -86,12 +86,11 @@ class NasaGpmIngestionWorker:
             for back in range(max_lookback_days + 1):
                 day = before - timedelta(days=back)
                 day_url = f"{GESDISC_DATA_ROOT}/{collection}/{day:%Y}/{day:%j}/"
-                resp = self.session.get(day_url, timeout=60)
-                if resp.status_code == 404:
+                listing = self._list_day(day_url, settled=day < datetime.now(timezone.utc) - timedelta(days=3))
+                if listing is None:
                     continue
-                resp.raise_for_status()
                 candidates = []
-                for name, ymd, hms in set(_GRANULE_RE.findall(resp.text)):
+                for name, ymd, hms in listing:
                     start = datetime.strptime(ymd + hms, "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc)
                     if start <= before:
                         candidates.append((start, name))
@@ -99,6 +98,21 @@ class NasaGpmIngestionWorker:
                     start, name = max(candidates)
                     return collection, day_url, name, start
         raise FileNotFoundError(f"No IMERG granule found within {max_lookback_days} days before {before.isoformat()}")
+
+    # Directory listings of past days never change; training builds hit the same day many times
+    _settled_listings = {}
+
+    def _list_day(self, day_url: str, settled: bool):
+        if settled and day_url in self._settled_listings:
+            return self._settled_listings[day_url]
+        resp = self.session.get(day_url, timeout=60)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        listing = set(_GRANULE_RE.findall(resp.text))
+        if settled:
+            self._settled_listings[day_url] = listing
+        return listing
 
     # ── Download ───────────────────────────────────────────────────
     def download(self, url: str, filename: str) -> Path:

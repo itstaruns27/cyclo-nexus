@@ -131,6 +131,10 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
         paint: { 'fill-color': '#a855f7', 'fill-opacity': 0.12 } });
       m.addLayer({ id: 'watch-area-line', type: 'line', source: 'systems', filter: ['==', ['get', 'kind'], 'watch_area'],
         paint: { 'line-color': '#a855f7', 'line-width': 1.5, 'line-dasharray': [2, 2] } });
+      m.addLayer({ id: 'forecast-cone', type: 'fill', source: 'tracks', filter: ['==', ['get', 'type'], 'forecast_cone'],
+        paint: { 'fill-color': '#f97316', 'fill-opacity': 0.13 } });
+      m.addLayer({ id: 'forecast-cone-line', type: 'line', source: 'tracks', filter: ['==', ['get', 'type'], 'forecast_cone'],
+        paint: { 'line-color': '#f97316', 'line-width': 1, 'line-opacity': 0.55 } });
       m.addLayer({ id: 'history-line', type: 'line', source: 'tracks', filter: ['==', ['get', 'type'], 'history_track'],
         paint: { 'line-color': '#cbd5e1', 'line-width': 2 } });
       m.addLayer({ id: 'official-track', type: 'line', source: 'tracks',
@@ -230,6 +234,7 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#ef4444' }} /><span>{t(lang, 'map.currentPos')}</span></div>
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#cbd5e1' }} /><span>{t(lang, 'map.history')}</span></div>
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#f97316' }} /><span>{t(lang, 'map.officialTrack')}</span></div>
+          <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#f97316', opacity: 0.35, borderRadius: 2 }} /><span>{t(lang, 'map.cone')}</span></div>
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#a855f7' }} /><span>{t(lang, 'map.aiTrack')}</span></div>
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#a855f7', opacity: 0.6 }} /><span>{t(lang, 'map.watchArea')}</span></div>
           <div className="map-legend-hint">{t(lang, 'map.clickHint')}</div>

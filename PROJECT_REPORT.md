@@ -77,7 +77,7 @@ An end-to-end pipeline that downloads the newest INSAT-3DS imagery and NASA IMER
 
 ### 2.2 Why This Problem Matters
 
-India's **8,041 km** coastline is exposed to nearly **10% of the world's tropical cyclones**. The North Indian Ocean (Bay of Bengal + Arabian Sea) produces 5–6 cyclones annually, of which 2–3 become severe ([NDMA](https://ndma.gov.in/Natural-Hazards/Cyclone)). The Bay of Bengal to Arabian Sea ratio is approximately 4:1.
+India's **11,098 km** coastline (Ministry of Ports, Shipping and Waterways, 2025) is exposed to nearly **10% of the world's tropical cyclones**. The North Indian Ocean (Bay of Bengal + Arabian Sea) produces 5–6 cyclones annually, of which 2–3 become severe ([NDMA](https://ndma.gov.in/Natural-Hazards/Cyclone)). The Bay of Bengal to Arabian Sea ratio is approximately 4:1.
 
 #### Historical Impact Data
 
@@ -85,11 +85,11 @@ India's **8,041 km** coastline is exposed to nearly **10% of the world's tropica
 |---------|------|--------|----------------|------------|
 | **Odisha Super Cyclone** | 1999 | 9,887 | US$4.44 billion | Destroyed ~2 million tonnes of rice; inadequate warning time |
 | **Cyclone Nargis** (Myanmar) | 2008 | 138,000+ | US$10 billion | Worst NIO disaster in modern history |
-| **Cyclone Phailin** | 2013 | 44 (Odisha) | US$700 million | 550,000+ evacuated with better warnings — **early warning saves lives** |
-| **Cyclone Amphan** | 2020 | 128 | US$13 billion | Strongest super cyclone in Bay of Bengal in 20 years |
+| **Cyclone Phailin** | 2013 | 44 (Odisha) | US$700 million | ~1 million evacuated (World Bank) with better warnings — **early warning saves lives** |
+| **Cyclone Amphan** | 2020 | 128 | ~US$14 billion (WMO) | Strongest super cyclone in Bay of Bengal in 20 years |
 | **Cyclone Biparjoy** | 2023 | 6 (India) | US$2.8 billion | Good evacuation, but economic damage significant |
 
-> **Key insight:** The difference between Odisha 1999 (9,887 deaths) and Phailin 2013 (44 deaths) is not the strength of the cyclone — it is the **quality and lead time of warnings + evacuation systems**. Every additional hour of warning can reduce fatalities by approximately 3% (NDMA studies).
+> **Key insight:** The difference between Odisha 1999 (9,887 deaths) and Phailin 2013 (44 deaths) is not the strength of the cyclone — it is the **quality and lead time of warnings + evacuation systems**. Just 24 hours' warning of a coming storm can cut the ensuing damage by about 30% (Global Commission on Adaptation, 2019, cited by WMO).
 
 ### 2.3 Gap Analysis
 

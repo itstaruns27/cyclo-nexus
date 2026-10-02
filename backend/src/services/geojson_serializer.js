@@ -9,7 +9,10 @@
  *   forecast_node     — forecast point, with `source` (OFFICIAL_* | AI_SATELLITE)
  *   forecast_track    — LineString per forecast source
  *   ai_fix            — latest satellite (INSAT + IMERG) analysis position
+ *   forecast_cone     — IMD cone of uncertainty around the official forecast (services/forecast_cone.js)
  */
+
+const { coneFeature } = require('./forecast_cone');
 
 const lonLat = (lon, lat) => [Number(lon), Number(lat)];
 
@@ -44,6 +47,9 @@ class GeoJSONSerializer {
         properties: { type: 'history_track', cyclone_id: c.cyclone_id },
       });
     }
+
+    const cone = coneFeature(c);
+    if (cone) features.push(cone);
 
     const bySource = new Map();
     for (const f of c.forecasts || []) {

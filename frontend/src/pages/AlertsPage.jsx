@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Anchor, Users, Building2, AlertOctagon, Satellite } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { useData } from '../context/DataContext';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 import { ALERT_COLORS, isOfficial, isWatch } from '../types/cyclone';
 
 function AdvisoryCard({ adv, lang }) {
@@ -28,6 +28,7 @@ function AdvisoryCard({ adv, lang }) {
       <p className="advisory-disclaimer">
         {adv.disclaimer}
         {adv.source_url && <> · <a href={adv.source_url} target="_blank" rel="noopener noreferrer">{t(lang, 'panel.viewSource')}</a></>}
+        {adv.type === 'advisory' && <> · <a href={`${API_BASE}/alerts/${encodeURIComponent(adv.cyclone_id)}/cap.xml`} target="_blank" rel="noopener noreferrer">{t(lang, 'alertsPage.capAlert')}</a></>}
       </p>
     </div>
   );
@@ -61,6 +62,9 @@ export default function AlertsPage() {
           {watches.map(a => <AdvisoryCard key={a.cyclone_id} adv={a} lang={lang} />)}
         </>
       )}
+      <p className="muted-small">
+        <a href={`${API_BASE}/alerts/cap.atom`} target="_blank" rel="noopener noreferrer">{t(lang, 'alertsPage.capFeed')}</a>
+      </p>
     </div>
   );
 }

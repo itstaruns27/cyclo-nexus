@@ -27,6 +27,7 @@ export const STRINGS_SITE = {
       watchLabel: 'Satellite watch',
       watch: 'Our satellites are watching storm clouds over the {sea}. This is not an official warning.',
       offline: 'We cannot reach the Cyclo-Nexus server — the information shown may be out of date.',
+      offlineSaved: 'You are offline. Showing the information saved on {time} — it may be out of date. Listen to radio/TV and local officials.',
       delayed: 'Live satellite data is delayed. Check IMD for the latest official information.',
     },
     home: {
@@ -46,7 +47,7 @@ export const STRINGS_SITE = {
       basin: { calm: 'No storm', watch: 'Being watched', storm: 'Storm active' },
       noAlert: 'None',
       mapTitle: 'Live map',
-      mapText: 'Storms, their expected path, clouds, wind and rain over the North Indian Ocean. Tap the sea to see local weather.',
+      mapText: 'Storms, their expected path, clouds, wind and rain over the North Indian Ocean. The shaded cone shows where the storm centre may go. Tap the sea to see local weather.',
       areaTitle: 'Check your area',
       areaText: 'Pick your city or use your location to see the weather now and how far away the nearest storm is.',
       chooseCity: 'Choose a coastal city',
@@ -206,6 +207,7 @@ export const STRINGS_SITE = {
       watchLabel: 'उपग्रह निगरानी',
       watch: 'हमारे उपग्रह {sea} में तूफ़ानी बादलों पर नज़र रख रहे हैं। यह आधिकारिक चेतावनी नहीं है।',
       offline: 'Cyclo-Nexus सर्वर से संपर्क नहीं हो पा रहा — दिखाई गई जानकारी पुरानी हो सकती है।',
+      offlineSaved: 'आप ऑफ़लाइन हैं। {time} को सहेजी गई जानकारी दिखाई जा रही है — यह पुरानी हो सकती है। रेडियो/टीवी और स्थानीय अधिकारियों की सूचना सुनें।',
       delayed: 'लाइव उपग्रह डेटा में देरी है। नवीनतम आधिकारिक जानकारी के लिए IMD देखें।',
     },
     home: {
@@ -225,7 +227,7 @@ export const STRINGS_SITE = {
       basin: { calm: 'कोई तूफ़ान नहीं', watch: 'निगरानी में', storm: 'तूफ़ान सक्रिय' },
       noAlert: 'कोई नहीं',
       mapTitle: 'लाइव नक्शा',
-      mapText: 'उत्तर हिंद महासागर पर तूफ़ान, उनका संभावित रास्ता, बादल, हवा और बारिश। स्थानीय मौसम के लिए समुद्र पर टैप करें।',
+      mapText: 'उत्तर हिंद महासागर पर तूफ़ान, उनका संभावित रास्ता, बादल, हवा और बारिश। छायांकित शंकु बताता है कि तूफ़ान का केंद्र कहाँ तक जा सकता है। स्थानीय मौसम के लिए समुद्र पर टैप करें।',
       areaTitle: 'अपना क्षेत्र जाँचें',
       areaText: 'अपना शहर चुनें या अपनी लोकेशन इस्तेमाल करें — अभी का मौसम और निकटतम तूफ़ान की दूरी देखें।',
       chooseCity: 'तटीय शहर चुनें',

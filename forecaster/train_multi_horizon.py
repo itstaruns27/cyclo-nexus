@@ -144,23 +144,28 @@ def train(args):
         sys.exit("Need windows in both splits; build more or change --val-from.")
 
     class Windows(Dataset):
+        """Whole set preloaded as uint8 (~1.6 MB per window) — no worker processes needed (Windows-safe)."""
         def __init__(self, items):
-            self.items = items
+            self.data = []
+            for r in items:
+                with np.load(OUT / f"{r['key']}.npz") as z:
+                    self.data.append((z["x"].copy(), {k: z[k].copy() for k in ("track", "wind", "dp")}, z["mask"].copy()))
 
         def __len__(self):
-            return len(self.items)
+            return len(self.data)
 
         def __getitem__(self, i):
-            z = np.load(OUT / f"{self.items[i]['key']}.npz")
-            return (torch.from_numpy(z["x"].astype(np.float32) / 255.0),
-                    {k: torch.from_numpy(z[k]) for k in ("track", "wind", "dp")}, torch.from_numpy(z["mask"]))
+            x, y, mask = self.data[i]
+            return (torch.from_numpy(x.astype(np.float32) / 255.0),
+                    {k: torch.from_numpy(v) for k, v in y.items()}, torch.from_numpy(mask))
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = CycloneForecaster().to(device)
     loss_fn = MultiHorizonForecastLoss().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
-    loaders = {k: DataLoader(Windows(v), batch_size=args.batch, shuffle=(k == "train"), num_workers=2)
+    loaders = {k: DataLoader(Windows(v), batch_size=args.batch, shuffle=(k == "train"), num_workers=0,
+                              pin_memory=(device == "cuda"))
                for k, v in split.items()}
 
     def run(loader, training):
@@ -170,7 +175,9 @@ def train(args):
             for x, y, mask in loader:
                 x, mask = x.to(device), mask.to(device)
                 y = {"track": y["track"].to(device), "v_max": y["wind"].to(device), "dp": y["dp"].to(device)}
-                pred = model(x)
+                with torch.autocast(device_type=device, dtype=torch.bfloat16, enabled=(device == "cuda")):
+                    pred = model(x)
+                pred = {k: v.float() for k, v in pred.items()}
                 out = loss_fn(pred, y, mask)
                 if training:
                     opt.zero_grad()

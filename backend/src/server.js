@@ -28,6 +28,7 @@ const internalRoutes = require('./routes/internal');
 const weatherRoutes = require('./routes/weather');
 const historicalRoutes = require('./routes/historical');
 const impactRoutes = require('./routes/impact');
+const capRoutes = require('./routes/cap');
 const { startWindScheduler } = require('./workers/wind_grid');
 
 const app = express();
@@ -122,6 +123,7 @@ app.use('/api/v1/internal', internalRoutes);
 app.use('/api/v1/weather', weatherRoutes);
 app.use('/api/v1/historical', historicalRoutes);
 app.use('/api/v1/impact', impactRoutes);
+app.use('/api/v1/alerts', capRoutes);
 
 // Unknown API paths → JSON 404 (instead of Express's HTML page)
 app.use('/api/', (_req, res) => res.status(404).json({ success: false, error: 'Not found' }));

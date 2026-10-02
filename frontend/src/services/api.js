@@ -8,8 +8,13 @@
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 export const API_BASE = baseUrl ? baseUrl.replace(/\/$/, '') + '/api/v1' : '/api/v1';
 
+// When the service worker answers from its offline store it adds this header (public/sw.js)
+const SAVED_HEADER = 'X-Cyclonexus-Saved';
+const savedAt = {};
+
 async function getJson(path, { allow404 = false } = {}) {
   const res = await fetch(`${API_BASE}${path}`);
+  savedAt[path] = res.headers.get(SAVED_HEADER);
   if (allow404 && res.status === 404) return null;
   // 503 still carries a JSON body (health / wind grid not ready) that callers interpret
   if (!res.ok && res.status !== 503) throw new Error(`HTTP ${res.status}`);
@@ -17,6 +22,11 @@ async function getJson(path, { allow404 = false } = {}) {
 }
 
 export const api = {
+  /** ISO time the last response for `path` was saved, when it came from the offline store; else null. */
+  savedAt(path) {
+    return savedAt[path] || null;
+  },
+
   /** @returns {Promise<import('../types/cyclone').ActiveSystem[]>} */
   async getActiveCyclones() {
     const body = await getJson('/cyclones');

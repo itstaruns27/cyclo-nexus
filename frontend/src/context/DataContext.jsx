@@ -22,6 +22,7 @@ export function DataProvider({ children }) {
   const [systems, setSystems] = useState([]);
   const [health, setHealth] = useState(null);
   const [offline, setOffline] = useState(false);
+  const [savedAt, setSavedAt] = useState(null); // set when the data shown came from the offline store
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -35,7 +36,9 @@ export function DataProvider({ children }) {
     const [s, h] = await Promise.allSettled([api.getActiveCyclones(), api.getHealth()]);
     if (s.status === 'fulfilled') setSystems(s.value);
     if (h.status === 'fulfilled') setHealth(h.value);
-    setOffline(s.status === 'rejected');
+    const saved = s.status === 'fulfilled' ? api.savedAt('/cyclones') : null;
+    setSavedAt(saved);
+    setOffline(s.status === 'rejected' || Boolean(saved));
     setLoaded(true);
   }, []);
 
@@ -44,6 +47,17 @@ export function DataProvider({ children }) {
     const id = setInterval(refresh, POLL_MS);
     return () => clearInterval(id);
   }, [refresh]);
+
+  // Warm the offline store (public/sw.js) with the advisory and forecast of every active system, so
+  // safety advice is readable later without network even if those pages were never opened.
+  const warmKey = savedAt ? '' : `${lang}|${systems.map(s => `${s.cyclone_id}@${s.observation_time}`).join(',')}`;
+  useEffect(() => {
+    if (!warmKey || !navigator.serviceWorker?.controller) return;
+    for (const s of systems) {
+      api.getAdvisory(s.cyclone_id, lang).catch(() => {});
+      api.getCycloneForecast(s.cyclone_id).catch(() => {});
+    }
+  }, [warmKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep a valid selection: previous choice if still active, else the strongest official system
   const selected = useMemo(() => {
@@ -54,8 +68,8 @@ export function DataProvider({ children }) {
   }, [systems, selectedId]);
 
   const value = useMemo(() => ({
-    lang, setLang, systems, health, offline, loaded, selected, select: setSelectedId, refresh,
-  }), [lang, setLang, systems, health, offline, loaded, selected, refresh]);
+    lang, setLang, systems, health, offline, savedAt, loaded, selected, select: setSelectedId, refresh,
+  }), [lang, setLang, systems, health, offline, savedAt, loaded, selected, refresh]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

@@ -46,6 +46,7 @@ export const STRINGS_V4 = {
       title: 'Advisories', fishermen: 'Fishermen', public: 'Public', administration: 'Administration',
       none: 'No advisories — no official system is active in the North Indian Ocean.', watchTitle: 'Satellite watch notices',
       englishOnly: 'Shown in English (translation not yet reviewed for this language).', loading: 'Loading advisories…',
+      capAlert: 'CAP 1.2 alert (XML)', capFeed: 'Machine-readable alert feed (CAP 1.2 / Atom) for SACHET and alert aggregators',
     },
     statusPage: {
       title: 'System Status', component: 'Component', status: 'Status', lastSuccess: 'Last success', lastData: 'Latest data',
@@ -54,7 +55,7 @@ export const STRINGS_V4 = {
       stale: 'Stale', never: 'Never',
     },
     map: {
-      history: 'Observed track', officialTrack: 'Official forecast', aiTrack: 'AI forecast', watchArea: 'Watch area (±300 km)',
+      history: 'Observed track', officialTrack: 'Official forecast', cone: 'Forecast cone (IMD track error)', aiTrack: 'AI forecast', watchArea: 'Watch area (±300 km)',
       clickHint: 'Click the ocean to check conditions', offline: 'Offline', delayed: 'Delayed',
     },
     footer: {
@@ -106,6 +107,7 @@ export const STRINGS_V4 = {
       title: 'परामर्श', fishermen: 'मछुआरे', public: 'जनता', administration: 'प्रशासन',
       none: 'कोई परामर्श नहीं — उत्तर हिंद महासागर में कोई आधिकारिक प्रणाली सक्रिय नहीं है।', watchTitle: 'उपग्रह निगरानी सूचनाएँ',
       englishOnly: 'अंग्रेज़ी में दिखाया गया है (इस भाषा का अनुवाद अभी समीक्षित नहीं है)।', loading: 'परामर्श लोड हो रहे हैं…',
+      capAlert: 'CAP 1.2 चेतावनी (XML)', capFeed: 'SACHET और चेतावनी एग्रीगेटरों के लिए मशीन-पठनीय फ़ीड (CAP 1.2 / Atom)',
     },
     statusPage: {
       title: 'सिस्टम स्थिति', component: 'घटक', status: 'स्थिति', lastSuccess: 'अंतिम सफलता', lastData: 'नवीनतम डेटा',
@@ -114,7 +116,7 @@ export const STRINGS_V4 = {
       stale: 'पुराना', never: 'कभी नहीं',
     },
     map: {
-      history: 'अवलोकित मार्ग', officialTrack: 'आधिकारिक पूर्वानुमान', aiTrack: 'AI पूर्वानुमान', watchArea: 'निगरानी क्षेत्र (±300 किमी)',
+      history: 'अवलोकित मार्ग', officialTrack: 'आधिकारिक पूर्वानुमान', cone: 'पूर्वानुमान शंकु (IMD मार्ग त्रुटि)', aiTrack: 'AI पूर्वानुमान', watchArea: 'निगरानी क्षेत्र (±300 किमी)',
       clickHint: 'स्थिति देखने के लिए समुद्र पर क्लिक करें', offline: 'ऑफ़लाइन', delayed: 'विलंबित',
     },
     footer: {

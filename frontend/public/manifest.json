@@ -1,25 +1,17 @@
 {
-  "name": "Cyclo-Nexus",
+  "name": "Cyclo-Nexus — cyclone alerts for safer coasts",
   "short_name": "Cyclo-Nexus",
-  "description": "AI-Driven Tropical Cyclone Intelligence Platform",
+  "description": "Live cyclone warnings, forecast tracks and safety advice for the North Indian Ocean coasts. Works offline with the last saved advisory.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0a0e1a",
-  "theme_color": "#06B6D4",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "orientation": "any",
   "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "categories": ["weather", "utilities"],
   "lang": "en",

@@ -13,7 +13,7 @@ import { catName, isActiveOfficial, rankSystems, seaName, showDemoBadge } from '
  * Renders nothing when all is clear.
  */
 export default function WarningBar() {
-  const { lang, systems, health, offline } = useData();
+  const { lang, systems, health, offline, savedAt } = useData();
   const ranked = rankSystems(systems);
   const official = ranked.filter(isActiveOfficial);
   const watches = ranked.filter(isWatch);
@@ -57,7 +57,11 @@ export default function WarningBar() {
       <div key="data" className="warn-row warn-data" role="status">
         <div className="site-container warn-inner">
           {offline ? <WifiOff size={16} className="warn-icon" /> : <Clock size={16} className="warn-icon" />}
-          <span className="warn-text">{t(lang, offline ? 'warn.offline' : 'warn.delayed')}</span>
+          <span className="warn-text">
+            {offline && savedAt
+              ? fill(t(lang, 'warn.offlineSaved'), { time: new Date(savedAt).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })
+              : t(lang, offline ? 'warn.offline' : 'warn.delayed')}
+          </span>
           <a className="warn-link" href="https://mausam.imd.gov.in" target="_blank" rel="noopener noreferrer">IMD <ArrowRight size={14} /></a>
         </div>
       </div>,

@@ -138,7 +138,8 @@ class MosdacIngestionWorker:
         target_time = target_time or datetime.now(timezone.utc)
         if target_time.tzinfo is None:
             target_time = target_time.replace(tzinfo=timezone.utc)
-        entries = self.search_granules(start=target_time - timedelta(days=1), end=target_time, count=100)
+        # Search dates are whole calendar days, so this spans up to 3 days (up to several hundred granules with INSAT-3DS rapid scans): fetch them all
+        entries = self.search_granules(start=target_time - timedelta(days=1), end=target_time, count=2000)
         for e in entries:
             if e["obs_time"] <= target_time:
                 return e

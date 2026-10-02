@@ -168,7 +168,13 @@ async def predict(payload: InferenceRequest):
         tensor_data = torch.from_numpy(np_tensor.copy()).to(device)
         with torch.inference_mode():
             # Forecaster expects (Batch, Seq_Length, Channels, H, W)
-            forecaster_input = tensor_data.unsqueeze(0)
+            # Same preprocessing as training (build_unified_set.py): block-mean to 256² (forecaster)
+            # and 512² (YOLO), rounded to the uint8 levels the training data was stored at.
+            def _as_trained(t, size):
+                k = t.shape[-1] // size
+                t = torch.nn.functional.avg_pool2d(t, k) if k > 1 else t
+                return torch.round(t.clamp(0, 1) * 255) / 255
+            forecaster_input = _as_trained(tensor_data, 256).unsqueeze(0)
             forecaster_output = models["forecaster"](forecaster_input)
             
             track_delta_raw = forecaster_output["track_delta"].squeeze(0).tolist()
@@ -187,7 +193,8 @@ async def predict(payload: InferenceRequest):
                 dp_pred = dp_pred_raw
             
             # YOLO expects 3 channels (e.g., RGB equivalent). We slice the first 3 channels (TIR1, WV, SW)
-            yolo_input = tensor_data[-1][:3].unsqueeze(0)
+            yolo_input = _as_trained(tensor_data[-1][:3].unsqueeze(0), 512)
+            yolo_size = float(yolo_input.shape[-1])
             yolo_results = models["yolo"](yolo_input)
             
             # Parse YOLO-OBB result (assuming the strongest detection)
@@ -203,10 +210,10 @@ async def predict(payload: InferenceRequest):
                 detection_confidence = float(yolo_results[0].obb.conf[best])
                 box = yolo_results[0].obb.xywhr[best].tolist()
                 obb = OBBMetrics(
-                    x_center=box[0] / 1024.0, # Normalize
-                    y_center=box[1] / 1024.0,
-                    width=box[2] / 1024.0,
-                    height=box[3] / 1024.0,
+                    x_center=box[0] / yolo_size,  # normalised to the image YOLO saw
+                    y_center=box[1] / yolo_size,
+                    width=box[2] / yolo_size,
+                    height=box[3] / yolo_size,
                     theta=box[4]
                 )
                 

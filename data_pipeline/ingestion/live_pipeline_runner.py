@@ -138,7 +138,7 @@ def select_window(insat: MosdacIngestionWorker, at: datetime = None) -> list:
     """Granule metadata for t0-15h … t0 at 3-hour steps (oldest first); t0 = newest granule at/before `at`."""
     latest = insat.fetch_latest_granule_metadata(at)
     t0 = latest["obs_time"]
-    entries = insat.search_granules(start=t0 - timedelta(hours=STEP_HOURS * SEQ_LEN + 24), end=t0, count=200)
+    entries = insat.search_granules(start=t0 - timedelta(hours=STEP_HOURS * SEQ_LEN + 24), end=t0, count=2000)
     window = []
     for k in range(SEQ_LEN - 1, -1, -1):
         target = t0 - timedelta(hours=STEP_HOURS * k)

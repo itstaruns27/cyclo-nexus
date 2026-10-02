@@ -125,17 +125,19 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | | YOLO-OBB oriented-box detector (serving pipeline) | ✅ serving · 🔄 retraining on real INSAT imagery |
 | | ConvLSTM + Bi-GRU **multi-horizon** forecaster (one head per 6/12/24/48/72 h) with Atkinson–Holliday loss | ✅ code + tests · 🔄 training on real windows |
 | | Grad-CAM explainability | 🔄 module + tests present, not yet in live path |
-| | Ensemble forecasts and uncertainty cone | 🗺️ |
+| | Forecast cone of uncertainty around the official track (IMD method and radii: 35–350 km at 6–72 h) | ✅ |
+| | AI ensemble forecasts | 🗺️ |
 | **Impact** | People and towns in the strong-wind zone and core, now and along the forecast track | ✅ |
 | | Typical deaths / damage of similar recorded storms (median, in ₹) | ✅ |
 | | Storm-surge and inundation layers (INCOIS) | 🗺️ |
 | **Alerts** | Template advisories for fishermen / public / administration in English + Hindi | ✅ |
 | | 9-language interface (en, hi, ta, te, ml, bn, or, kn, mr) | ✅ UI · 🔄 advisory text beyond EN/HI after native-speaker review |
-| | SMS / WhatsApp / push notifications, Sachet (CAP) integration | 🗺️ |
+| | CAP 1.2 alert feed (OASIS standard used by NDMA SACHET): English + Hindi, threat circles along the official track, demo = `Exercise` | ✅ |
+| | SMS / WhatsApp / push notifications; registration of the CAP feed with SACHET | 🗺️ |
 | **Web** | Public home page, live map (satellite / wind / rain / SST), tap-anywhere cyclone check, "check my area", safety guide, emergency numbers | ✅ |
 | | Expert panel (analysis, forecasts, impact, advisories, climatology, system health) | ✅ |
 | | Past-storms explorer with per-storm impact | ✅ |
-| | Installable PWA with offline cache | 🔄 manifest + service worker present |
+| | Installable PWA, offline-first: last advisory, forecast and alerts stay readable without network, clearly marked "saved at …" | ✅ |
 | **Ops** | HMAC-SHA256 + gzip webhooks, replay protection, heartbeat, "data delayed" banner | ✅ |
 | | Free-tier deployment kit (Oracle VM + Hostinger + Vercel), Dockerfile | ✅ written · 🔄 deploying |
 
@@ -727,6 +729,7 @@ flowchart TB
 | `GET` | `/api/v1/cyclones/:id` | One system with history and forecasts |
 | `GET` | `/api/v1/cyclones/:id/forecast` | GeoJSON track + forecast (official and AI, 5 horizons) |
 | `GET` | `/api/v1/cyclones/:id/advisory?lang=en\|hi` | Advisory for a specific cyclone |
+| `GET` | `/api/v1/alerts/cap.atom` · `/alerts/:id/cap.xml` | CAP 1.2 alerts (en-IN + hi-IN, official systems only) and Atom index for SACHET / alert aggregators |
 | `GET` | `/api/v1/weather/wind-grid` | Cached 10 m wind field (Open-Meteo, 3°, 20–130°E × 20°S–40°N) |
 | `GET` | `/api/v1/weather/place?lat&lon` | Nearest named town with distance and direction |
 | `GET` | `/api/v1/historical/seasons` | Seasons with storm counts (IBTrACS NI, 1980+) |
@@ -853,8 +856,8 @@ timeline
     title Cyclo-Nexus roadmap
     Done : Live INSAT-3DS + IMERG pipeline : Physics detector validated : Official feed + advisories : Impact engine : Public site + expert panel
     Next (weeks) : Retrain YOLO-OBB on 750+ real frames : Train multi-horizon forecaster : Deploy on free tier : Enable AI forecast after validation
-    Later (months) : SMS / WhatsApp / Sachet (CAP) alerts : Storm surge + inundation (INCOIS) : Himawari-9 + scatterometer winds : Ensemble uncertainty cone
-    Scale : Offline-first PWA for fishing boats : District dashboards for SDMAs : Open API for researchers
+    Later (months) : SMS / WhatsApp alerts + SACHET registration of the CAP feed : Storm surge + inundation (INCOIS) : Himawari-9 + scatterometer winds : AI ensemble forecasts
+    Scale : Fishing-boat offline mode (satellite messenger / NAVIC) : District dashboards for SDMAs : Open API for researchers
 ```
 
 ---
@@ -1102,7 +1105,9 @@ python -m data_pipeline.ingestion.live_pipeline_runner --at 2024-05-26T09:00Z --
 7. Data: [ISRO MOSDAC](https://www.mosdac.gov.in/) · [NASA GPM IMERG](https://gpm.nasa.gov/data/imerg) · [NOAA IBTrACS](https://www.ncei.noaa.gov/products/international-best-track-archive) · [JTWC](https://www.metoc.navy.mil/jtwc/jtwc.html) · [Open-Meteo](https://open-meteo.com/) · [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) · [GeoNames](https://www.geonames.org/)
 8. Authorities: [IMD](https://mausam.imd.gov.in/) · [NDMA — Cyclone](https://ndma.gov.in/Natural-Hazards/Cyclone)
 9. Impact evidence: [MoPSW coastline 2025](https://shipmin.gov.in/en/content/revised-length-indias-coastline-0) · [CMFRI census 2016](http://eprints.cmfri.org.in/17490/) · [WMO / GCA 2019](https://wmo.int/news/media-centre/early-warning-systems-must-protect-everyone-within-five-years) · [World Bank — Phailin](https://www.worldbank.org/en/results/2014/04/10/india-averts-cyclone-phailin-devastation) · [Amphan losses, WMO 2020](https://theprint.in/india/amphan-costliest-cyclone-in-north-indian-ocean-resulted-in-loss-of-14-billion-un-report/642754/)
-10. Tools: [Ultralytics YOLO OBB](https://docs.ultralytics.com/tasks/obb/) · [MapLibre GL JS](https://maplibre.org/)
+10. Mohapatra, M. et al. *Evaluation of Cone of Uncertainty in Tropical Cyclone Track Forecast over North Indian Ocean Issued by India Meteorological Department.* Tropical Cyclone Research and Review. [ScienceDirect](https://www.sciencedirect.com/science/article/pii/S2225603218300432) — source of the cone radii
+11. OASIS *Common Alerting Protocol v1.2* (2010). [Specification](https://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2-os.html)
+12. Tools: [Ultralytics YOLO OBB](https://docs.ultralytics.com/tasks/obb/) · [MapLibre GL JS](https://maplibre.org/)
 
 ---
 
