@@ -25,17 +25,18 @@ def main():
     ap.add_argument("--epochs", type=int, default=120)
     ap.add_argument("--imgsz", type=int, default=512, help="store frames are 512²; serve.py feeds YOLO 512²")
     ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--workers", type=int, default=2, help="data-loader processes; each loads CUDA on Windows (page-file heavy)")
     args = ap.parse_args()
 
     model = YOLO(args.model)
     results = model.train(
-        data=args.data, epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+        data=args.data, epochs=args.epochs, imgsz=args.imgsz, batch=args.batch, workers=args.workers,
         # Satellite imagery: no colour jitter (channels are physical brightness temperatures / rain);
         # no flips (a mirrored storm spins the wrong way for its hemisphere). Rotation keeps the
         # spin direction, so it is a physically valid augmentation; mosaic adds scene variety.
         hsv_h=0.0, hsv_s=0.0, hsv_v=0.0, fliplr=0.0, flipud=0.0, degrees=45.0, mosaic=0.5,
         close_mosaic=15, translate=0.1, scale=0.25, cos_lr=True, patience=30, seed=0, deterministic=True,
-        project="runs/cyclone_obb", name="real", exist_ok=True,
+        project=str(Path(__file__).resolve().parents[1] / "runs" / "cyclone_obb"), name="real", exist_ok=True,
     )
     best = Path(results.save_dir) / "weights" / "best.pt"
     dest = Path(__file__).resolve().parent / "weights" / "vision_best.pt"

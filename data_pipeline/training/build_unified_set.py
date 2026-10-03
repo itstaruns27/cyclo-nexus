@@ -276,20 +276,40 @@ def cmd_build(args):
 
     store = FrameStore(workers_for)
 
-    # Phase 1 — granule lists (MOSDAC search only, sequential and quick)
+    # Phase 1 — granule lists (MOSDAC search only, sequential). Results are cached on disk so an
+    # interrupted build resumes without repeating the searches.
+    cache_path = TRAIN / "phase1_cache.jsonl"
+    cached = {}
+    if cache_path.exists():
+        for l in cache_path.read_text(encoding="utf-8").splitlines():
+            if l.strip():
+                c = json.loads(l)
+                cached[c["key"]] = [{**m, "obs_time": datetime.fromisoformat(m["obs_time"])} for m in c["window"]]                     if c["window"] else None
+
+    def remember(key, window):
+        with open(cache_path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"key": key, "window": [{**m, "obs_time": m["obs_time"].isoformat()} for m in window]
+                                 if window else None}) + "\n")
+
     jobs = []
     for sid, t in plan:
         key = f"{t:%Y%m%d%H}_{sid}"
         if key in done:
             continue
-        try:
-            window = select_window(workers_for(t), at=t + timedelta(minutes=30))
-            if len({m["granule_id"] for m in window}) < SEQ_LEN - 1:  # archive gaps: >1 frame repeated
-                log(f"{key}: skipped, window has archive gaps")
-                continue
+        if key in cached:
+            window = cached[key]
+        else:
+            try:
+                window = select_window(workers_for(t), at=t + timedelta(minutes=30))
+                if len({m["granule_id"] for m in window}) < SEQ_LEN - 1:  # archive gaps: >1 frame repeated
+                    log(f"{key}: skipped, window has archive gaps")
+                    window = None
+            except Exception as exc:
+                log(f"{key}: no complete window ({exc})")
+                window = None
+            remember(key, window)
+        if window:
             jobs.append(("win", key, sid, t, window))
-        except Exception as exc:
-            log(f"{key}: no complete window ({exc})")
     for t in negs:
         key = f"{t:%Y%m%d%H}_neg"
         if key in done:

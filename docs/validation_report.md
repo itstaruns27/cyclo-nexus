@@ -30,3 +30,37 @@ always take priority.
 ## Caveats
 - Only 6 negative days — false-alarm rate is uncertain; add more negatives before relying on it.
 - Retrained YOLO weights (Task 3.4) must be re-scored on this set before being switched on.
+
+## Retrained models on real INSAT + IMERG data (3 Oct 2026)
+
+Unified training set: 1,245 real frames (2018–2025, 74 storms), stored 512² uint8.
+Split by season: train 2018–2022, model selection 2023, **test 2024–2025 (never seen)**.
+
+### YOLO-OBB detector (yolo11s-obb, 512 px, best epoch 12 of 42, early stopping)
+
+Held-out 2024–2025 frames: 230 storm instances, 55 storm-free frames. A hit is a box within 300 km of the best-track centre.
+
+| Confidence | Storms found | Median centre error | Storm-free frames with a false alarm |
+|---|---|---|---|
+| 0.25 | 79% | 66 km | 33 / 55 |
+| 0.5 | 67% | 63 km | 16 / 55 |
+| 0.6 | 57% | 59 km | 8 / 55 |
+| **0.7 (production default)** | 29% | 48 km | 3 / 55 |
+| 0.8 | 6% | 34 km | 0 / 55 |
+
+Old (synthetic-trained) weights: 0.000 on Remal. The physics detector (threshold 0.95) stays the primary watch signal: 8/14 storms, 0/6 false-alarm days, but 101–463 km centre error. YOLO adds precise extra candidates at 0.7, still subject to the SST and land checks.
+
+### Track / intensity model (forecaster/track_model.py, ensemble of 5)
+
+Storm-centred 6 × 3 h crops + recent motion → correction to persistence. Test: 133 windows (2024–2025).
+
+| Track error (km) | 6 h | 12 h | 24 h | 48 h | 72 h |
+|---|---|---|---|---|---|
+| Persistence | 38 | 74 | 153 | 325 | 513 |
+| Motion-only model | 37 | 72 | 151 | 318 | 476 |
+| **Satellite + motion model** | 37 | 73 | 148 | 297 | 517 |
+
+- **Track:** the satellite model improves on persistence by 3% at 24 h and 9% at 48 h.
+- **Intensity:** wind error is about the same as persistence (8.5 vs 8.3 kt at 24 h).
+- The full-domain ConvLSTM (`train_multi_horizon.py`) collapsed to a constant prediction on real data and is not used.
+- Official JTWC / IMD forecasts remain more accurate, so `AI_FORECAST_ENABLED` stays `false`.

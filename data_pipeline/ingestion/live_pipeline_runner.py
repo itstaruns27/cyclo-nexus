@@ -68,7 +68,7 @@ BACKEND_API = os.environ.get("BACKEND_API_URL", "http://localhost:3001/api/v1").
 WEBHOOK_URL = f"{BACKEND_API}/webhook/inference"
 HEARTBEAT_URL = f"{BACKEND_API}/webhook/heartbeat"
 TENSOR_TRANSPORT = os.environ.get("TENSOR_TRANSPORT", "uint8")        # uint8 | float32
-MIN_CONFIDENCE = float(os.environ.get("DETECTION_MIN_CONFIDENCE", "0.5"))  # YOLO
+MIN_CONFIDENCE = float(os.environ.get("DETECTION_MIN_CONFIDENCE", "0.7"))  # YOLO; 0.7 → 3/55 storm-free false alarms (docs/validation_report.md)
 WATCH_MIN_SCORE = float(os.environ.get("WATCH_MIN_SCORE", "0.95"))       # physics detector; see docs/validation_report.md
 AI_FORECAST_ENABLED = os.environ.get("AI_FORECAST_ENABLED", "false").lower() == "true"
 MIN_GENESIS_SST_C = 26.5
