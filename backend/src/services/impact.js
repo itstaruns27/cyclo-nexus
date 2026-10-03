@@ -1,7 +1,10 @@
 /**
  * Impact engine — people exposed to a cyclone and what similar storms caused.
  * ════════════════════════════════════════════════════════════════════════
- * Population: GeoNames cities1000 (every town/city ≥ 1,000 people, CC-BY 4.0), filtered to the
+ * People: GHS-POP 2020 gridded population (EU JRC, CC-BY 4.0, ~1 km aggregated to 2.5' ≈ 4.6 km;
+ * backend/scripts/build_geo.py), so villages and rural areas count and cities are not double counted;
+ * countries per cell follow the Government of India's view of its boundaries (Natural Earth IND).
+ * Town names: GeoNames cities1000 (every town/city ≥ 1,000 people, CC-BY 4.0), filtered to the
  * North Indian Ocean region → backend/data/geonames_nio.json. Villages below 1,000 people are not
  * listed, so exposure is a LOWER BOUND of the true number of people affected.
  *
@@ -15,9 +18,20 @@
  * Recorded deaths / damage: backend/data/cyclone_impacts.json (approximate, cited per storm).
  */
 
+const fs = require('fs');
 const path = require('path');
 const towns = require(path.join(__dirname, '..', '..', 'data', 'geonames_nio.json')).rows;
 const recorded = require(path.join(__dirname, '..', '..', 'data', 'cyclone_impacts.json'));
+
+// Population grid (float32 people per cell) and country index per cell
+const GRID = require(path.join(__dirname, '..', '..', 'data', 'pop_grid.json'));
+const readBin = (f, T) => {
+  const b = fs.readFileSync(path.join(__dirname, '..', '..', 'data', f));
+  return new T(b.buffer, b.byteOffset, b.byteLength / T.BYTES_PER_ELEMENT);
+};
+const POP = readBin('pop_grid.bin', Float32Array);
+const CTRY = readBin('country_grid.bin', Uint8Array);
+const ZONE = new Uint8Array(GRID.rows * GRID.cols); // scratch: strongest zone reached per cell
 
 const CELL = 1; // degrees; spatial index for the town list
 const index = new Map();
@@ -105,6 +119,49 @@ function densify(points, stepKm = 25) {
   return out;
 }
 
+/** Mark grid cells inside this point's quadrant wind field with the strongest zone (1 gale, 2 storm, 3 core). */
+function markCells(p, reach, touched) {
+  const { west, north, cell_deg: d, rows, cols } = GRID;
+  const kmLat = 111.2; const kmLon = 111.2 * Math.cos(p.lat * R);
+  const r0 = Math.max(0, Math.floor((north - (p.lat + reach / kmLat)) / d));
+  const r1 = Math.min(rows - 1, Math.floor((north - (p.lat - reach / kmLat)) / d));
+  const c0 = Math.max(0, Math.floor((p.lon - reach / kmLon - west) / d));
+  const c1 = Math.min(cols - 1, Math.floor((p.lon + reach / kmLon - west) / d));
+  for (let r = r0; r <= r1; r++) {
+    const dy = (north - (r + 0.5) * d - p.lat) * kmLat;
+    for (let c = c0; c <= c1; c++) {
+      const i = r * cols + c;
+      if (ZONE[i] === 3 || POP[i] <= 0) continue;
+      const dx = (west + (c + 0.5) * d - p.lon) * kmLon;
+      const dist = Math.hypot(dx, dy);
+      if (dist > reach) continue;
+      const q = Math.floor(((Math.atan2(dx, dy) / R + 360) % 360) / 90) % 4; // NE, SE, SW, NW
+      const z = dist <= p.radii[64][q] ? 3 : dist <= p.radii[50][q] ? 2 : dist <= p.radii[34][q] ? 1 : 0;
+      if (z > ZONE[i]) {
+        if (!ZONE[i]) touched.push(i);
+        ZONE[i] = z;
+      }
+    }
+  }
+}
+
+/** People per zone and per country from the marked cells; resets the scratch grid. */
+function gridTotals(touched) {
+  const out = { people_gale_zone: 0, people_storm_zone: 0, people_core: 0, by_country: {} };
+  for (const i of touched) {
+    const n = POP[i]; const z = ZONE[i];
+    out.people_gale_zone += n;
+    if (z >= 2) out.people_storm_zone += n;
+    if (z >= 3) out.people_core += n;
+    const cc = GRID.countries[CTRY[i]];
+    if (cc) out.by_country[cc] = (out.by_country[cc] || 0) + n;
+    ZONE[i] = 0;
+  }
+  for (const k of ['people_gale_zone', 'people_storm_zone', 'people_core']) out[k] = Math.round(out[k]);
+  for (const k of Object.keys(out.by_country)) out.by_country[k] = Math.round(out.by_country[k]);
+  return out;
+}
+
 /**
  * People and towns in the gale (≥ 34 kt), storm-force (≥ 50 kt) and hurricane-force (≥ 64 kt) zones.
  * points: [{ lat, lon, kt, r34_ne … r64_nw (nm, optional) }] (kt = sustained wind in knots).
@@ -112,6 +169,7 @@ function densify(points, stepKm = 25) {
 function exposure(points) {
   const RANK = { gale: 1, storm: 2, core: 3 };
   const hit = new Map(); // town key → { t, zone, km }
+  const touched = [];
   let measured = 0;
   const pts = points.map(p => {
     const kt = Number(p.kt) || 0;
@@ -122,6 +180,7 @@ function exposure(points) {
   for (const p of densify(pts)) {
     const reach = Math.max(...p.radii[34]);
     if (!reach) continue;
+    markCells(p, reach, touched);
     for (const [t, d] of townsNear(p.lat, p.lon, reach)) {
       const q = Math.floor(bearingDeg(p.lat, p.lon, t[1], t[2]) / 90) % 4;
       const zone = d <= p.radii[64][q] ? 'core' : d <= p.radii[50][q] ? 'storm' : d <= p.radii[34][q] ? 'gale' : null;
@@ -133,18 +192,12 @@ function exposure(points) {
     }
   }
   const all = [...hit.values()];
-  const sum = list => list.reduce((s, h) => s + h.t[3], 0);
   const atLeast = z => all.filter(h => RANK[h.zone] >= RANK[z]);
-  const byCountry = {};
-  for (const h of all) byCountry[h.t[4]] = (byCountry[h.t[4]] || 0) + h.t[3];
   return {
-    people_gale_zone: sum(all),
-    people_storm_zone: sum(atLeast('storm')),
-    people_core: sum(atLeast('core')),
+    ...gridTotals(touched),
     towns_gale_zone: all.length,
     towns_storm_zone: atLeast('storm').length,
     towns_core: atLeast('core').length,
-    by_country: byCountry,
     radii_source: measured
       ? `measured JTWC wind radii (${measured} of ${points.length} track points), typical radii elsewhere`
       : 'typical radii for the intensity (IBTrACS North Indian Ocean climatology)',

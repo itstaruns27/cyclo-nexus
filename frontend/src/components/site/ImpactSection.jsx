@@ -32,7 +32,7 @@ export default function ImpactSection({ lead, lang }) {
           <div className="grid-4">
             <div className="impact-stat danger">
               <Users size={20} />
-              <strong>{compact(exp.people_gale_zone, lang)}</strong>
+              <strong>{compact(exp.people_storm_zone ?? exp.people_gale_zone, lang)}</strong>
               <span>{fill(t(lang, 'impact.inPath'), { h: storm.forecast_hours || 0 })}</span>
             </div>
             <div className="impact-stat danger">

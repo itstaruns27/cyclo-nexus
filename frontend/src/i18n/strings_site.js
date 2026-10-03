@@ -129,13 +129,13 @@ export const STRINGS_SITE = {
     impact: {
       title: 'Cyclone impact', text: 'What major cyclones have cost the region — lives and money.',
       titleActive: 'Who could be affected', textActive: 'People living in towns inside the storm’s strong-wind zone, now and along its forecast path, and what similar storms caused before.',
-      inPath: 'people in the storm’s path (next {h} h)', inCore: 'people near the destructive core',
+      inPath: 'people facing damaging winds (≥ 93 km/h) in the next {h} h', inCore: 'people near the destructive core',
       pastDeaths: 'lives lost in a typical similar storm', pastLoss: 'damage in a typical similar storm',
       towns: 'Towns in the path', analogs: 'Similar past storms: {list}.',
       pastTitle: 'Past cyclone impact',
       totalDeaths: 'lives lost in {n} major cyclones since 1999', totalLoss: 'recorded damage',
       deaths: 'Deaths', loss: 'Damage', people: 'People in path',
-      note: 'People in path = towns of 1,000+ people within the strong-wind zone (GeoNames), so real numbers are higher. Deaths and damage are approximate published figures.',
+      note: 'People = gridded population (GHS-POP 2020, ~1 km) inside the storm’s wind zones. Deaths and damage are approximate published figures.',
       x: {
         title: 'Impact assessment', exposure: 'Population exposure', noActive: 'No official system is active. Exposure is computed automatically when one forms; past storms are below.',
         forecastSource: 'Track', now: 'Current position', forecast: 'Current + forecast track',
@@ -145,8 +145,8 @@ export const STRINGS_SITE = {
         analogs: 'Similar recorded storms', median: 'median', majorTitle: 'Major recorded cyclones', storm: 'Storm', season: 'Year', peak: 'Peak', source: 'Source',
         method: 'Method and limits',
         methodItems: [
-          'Population: GeoNames cities1000 (every town or city with at least 1,000 people, CC-BY 4.0). Villages are not included, so exposure is a lower bound.',
-          'Zones along the track (interpolated every 25 km): destructive core = within 60 km where wind ≥ 64 kt; strong-wind zone = within 150 / 200 / 250 km where wind ≥ 34 / 48 / 64 kt (typical North Indian Ocean radii, not storm-specific wind fields).',
+          'Population: GHS-POP 2020 gridded population (EU JRC, ~1 km, CC-BY 4.0), so rural areas count and cities are not double counted.',
+          'Zones along the track (every 25 km): gale ≥ 34 kt, storm-force ≥ 50 kt and destructive ≥ 64 kt, using the storm’s measured JTWC quadrant wind radii where available, otherwise typical radii for its strength.',
           'Upcoming storms use the current position plus the official forecast track (AI track if no official one).',
           'Similar storms: recorded cyclones whose peak wind is within ±20 kt of the forecast peak. Deaths and damage are approximate published figures (see links).',
         ],
@@ -164,7 +164,7 @@ export const STRINGS_SITE = {
       systems: 'systems', cyclones: 'cyclones (≥ 62 km/h)', severe: 'very severe (≥ 118 km/h)', strongest: 'Strongest',
       details: 'Details and impact', duration: 'Duration', days: 'days', distance: 'Distance travelled', peakWind: 'Peak wind',
       minPressure: 'Lowest pressure', peakGrade: 'Peak grade', landfall: 'Landfall', noLandfall: 'No landfall recorded',
-      notRecorded: 'Not in our records', exposureNote: 'People counts: towns of 1,000+ people within the storm’s wind zones (GeoNames).',
+      notRecorded: 'Not in our records', exposureNote: 'People counts: gridded population (GHS-POP 2020) inside the storm’s wind zones.',
     },
     wx: {
       title: 'Weather report', gusts: 'Gusts', clouds: 'Cloud cover', feels: 'Feels like', today: 'Today',
@@ -309,19 +309,19 @@ export const STRINGS_SITE = {
     impact: {
       title: 'चक्रवात का प्रभाव', text: 'बड़े चक्रवातों से क्षेत्र को हुई जान-माल की हानि।',
       titleActive: 'कौन प्रभावित हो सकता है', textActive: 'तूफ़ान के तेज़ हवा क्षेत्र में, अभी और अनुमानित रास्ते पर, कस्बों में रहने वाले लोग — और पहले ऐसे तूफ़ानों से क्या हुआ।',
-      inPath: 'लोग तूफ़ान के रास्ते में (अगले {h} घंटे)', inCore: 'लोग विनाशकारी केंद्र के पास',
+      inPath: 'लोग जिन तक अगले {h} घंटों में नुकसानदेह हवाएँ (≥ 93 किमी/घंटा) पहुँच सकती हैं', inCore: 'लोग विनाशकारी केंद्र के पास',
       pastDeaths: 'ऐसे सामान्य तूफ़ान में जानें गईं', pastLoss: 'ऐसे सामान्य तूफ़ान में नुकसान',
       towns: 'रास्ते के कस्बे', analogs: 'मिलते-जुलते पुराने तूफ़ान: {list}।',
       pastTitle: 'पुराने चक्रवातों का प्रभाव',
       totalDeaths: '1999 से {n} बड़े चक्रवातों में जानें गईं', totalLoss: 'दर्ज नुकसान',
       deaths: 'मृत्यु', loss: 'नुकसान', people: 'रास्ते में लोग',
-      note: 'रास्ते में लोग = तेज़ हवा क्षेत्र में 1,000+ आबादी वाले कस्बे (GeoNames), इसलिए असली संख्या अधिक है। मृत्यु और नुकसान प्रकाशित अनुमानित आँकड़े हैं।',
+      note: 'लोग = तूफ़ान के पवन क्षेत्रों में ग्रिड आधारित जनसंख्या (GHS-POP 2020, ~1 किमी)। मृत्यु और क्षति अनुमानित प्रकाशित आँकड़े हैं।',
     },
     hist: {
       systems: 'प्रणालियाँ', cyclones: 'चक्रवात (≥ 62 किमी/घंटा)', severe: 'अति गंभीर (≥ 118 किमी/घंटा)', strongest: 'सबसे शक्तिशाली',
       details: 'विवरण और प्रभाव', duration: 'अवधि', days: 'दिन', distance: 'तय दूरी', peakWind: 'अधिकतम हवा',
       minPressure: 'न्यूनतम दाब', peakGrade: 'अधिकतम श्रेणी', landfall: 'तट से टकराया', noLandfall: 'तट से टकराना दर्ज नहीं',
-      notRecorded: 'हमारे रिकॉर्ड में नहीं', exposureNote: 'लोगों की संख्या: तूफ़ान के हवा क्षेत्र में 1,000+ आबादी वाले कस्बे (GeoNames)।',
+      notRecorded: 'हमारे रिकॉर्ड में नहीं', exposureNote: 'जनसंख्या: तूफ़ान के पवन क्षेत्रों में ग्रिड आधारित जनसंख्या (GHS-POP 2020)।',
     },
     wx: {
       title: 'मौसम रिपोर्ट', gusts: 'झोंके', clouds: 'बादल', feels: 'महसूस', today: 'आज',

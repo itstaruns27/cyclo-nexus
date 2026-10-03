@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
+import { applyIndiaBoundaries } from '../../utils/indiaBoundaries';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { IMD_COLORS } from '../../types/cyclone';
 import { t } from '../../i18n/translations';
@@ -63,6 +64,7 @@ export default function StormMap({ points, forecastGeo, selected, galeArea, onSe
     map.current = m;
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.on('load', () => {
+      applyIndiaBoundaries(m);
       for (const id of ['cone', 'fc', 'track', 'gale', 'sel']) m.addSource(id, { type: 'geojson', data: EMPTY });
       m.addLayer({ id: 'cone-fill', type: 'fill', source: 'cone', paint: { 'fill-color': '#f97316', 'fill-opacity': 0.12 } });
       m.addLayer({ id: 'cone-line', type: 'line', source: 'cone', paint: { 'line-color': '#f97316', 'line-opacity': 0.5, 'line-width': 1 } });

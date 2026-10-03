@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import CycloneMap from '../components/CycloneMap';
 import AreaCheck from '../components/site/AreaCheck';
+import PastImpact from '../components/site/PastImpact';
 import ImpactSection from '../components/site/ImpactSection';
 import { t } from '../i18n/translations';
 import { fill } from '../i18n/strings_site';
@@ -180,6 +181,10 @@ export default function HomePage() {
           <ImpactSection lead={lead} lang={lang} />
         </Section>
       )}
+
+      <Section id="past" title={t(lang, 'impact.pastTitle')} text={t(lang, 'impact.text')}>
+        <PastImpact lang={lang} />
+      </Section>
 
       <Section id="safety" title={t(lang, 'home.safetyTitle')} text={t(lang, 'home.safetyText')} tone="soft">
         <div className="grid-3">

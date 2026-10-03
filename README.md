@@ -127,7 +127,7 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | | Grad-CAM explainability | 🔄 module + tests present, not yet in live path |
 | | Forecast cone of uncertainty around the official track (IMD method and radii: 35–350 km at 6–72 h) | ✅ |
 | | AI ensemble forecasts | 🗺️ |
-| **Impact** | People and towns in the gale (≥ 63 km/h), storm-force (≥ 93 km/h) and destructive (≥ 118 km/h) zones, using each storm's measured JTWC quadrant wind radii (typical radii when unmeasured); de-duplicated GeoNames towns | ✅ |
+| **Impact** | People in the gale (≥ 63 km/h), storm-force (≥ 93 km/h) and destructive (≥ 118 km/h) zones from the GHS-POP 2020 ~1 km population grid (rural areas included, no double counting), using each storm's measured JTWC quadrant wind radii; storm-force exposure matches official "people affected" within ~20–90% (Phailin 1.08 vs 1.32 crore) | ✅ |
 | | Typical deaths / damage of similar recorded storms (median, in ₹) | ✅ |
 | | Storm-surge and inundation layers (INCOIS) | 🗺️ |
 | **Alerts** | Template advisories for fishermen / public / administration in English + Hindi | ✅ |
@@ -1110,8 +1110,10 @@ python -m data_pipeline.ingestion.live_pipeline_runner --at 2024-05-26T09:00Z --
 8. Authorities: [IMD](https://mausam.imd.gov.in/) · [NDMA — Cyclone](https://ndma.gov.in/Natural-Hazards/Cyclone)
 9. Impact evidence: [MoPSW coastline 2025](https://shipmin.gov.in/en/content/revised-length-indias-coastline-0) · [CMFRI census 2016](http://eprints.cmfri.org.in/17490/) · [WMO / GCA 2019](https://wmo.int/news/media-centre/early-warning-systems-must-protect-everyone-within-five-years) · [World Bank — Phailin](https://www.worldbank.org/en/results/2014/04/10/india-averts-cyclone-phailin-devastation) · [Amphan losses, WMO 2020](https://theprint.in/india/amphan-costliest-cyclone-in-north-indian-ocean-resulted-in-loss-of-14-billion-un-report/642754/)
 10. Mohapatra, M. et al. *Evaluation of Cone of Uncertainty in Tropical Cyclone Track Forecast over North Indian Ocean Issued by India Meteorological Department.* Tropical Cyclone Research and Review. [ScienceDirect](https://www.sciencedirect.com/science/article/pii/S2225603218300432) — source of the cone radii
-11. OASIS *Common Alerting Protocol v1.2* (2010). [Specification](https://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2-os.html)
-12. Tools: [Ultralytics YOLO OBB](https://docs.ultralytics.com/tasks/obb/) · [MapLibre GL JS](https://maplibre.org/)
+11. Schiavina, M. et al. (2023) *GHS-POP R2023A — GHS population grid multitemporal (1975–2030)*, European Commission JRC. CC-BY 4.0 — population for impact estimates
+12. Natural Earth 1:10m admin-0 countries, India point of view (public domain) — maps show India's boundaries as recognised by the Government of India
+13. OASIS *Common Alerting Protocol v1.2* (2010). [Specification](https://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2-os.html)
+14. Tools: [Ultralytics YOLO OBB](https://docs.ultralytics.com/tasks/obb/) · [MapLibre GL JS](https://maplibre.org/)
 
 ---
 

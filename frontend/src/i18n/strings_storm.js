@@ -51,7 +51,7 @@ export const STRINGS_STORM = {
         analogs: 'What similar storms caused', analogsText: 'Storms of similar strength in our records (median):',
         source: 'Source', zone: { core: 'core', storm: 'storm', gale: 'gale' },
         method: 'How this is estimated',
-        methodText: 'Population of towns of 1,000+ people (GeoNames) inside each wind zone, using the storm’s measured wind radii (JTWC) where available, otherwise typical radii for its strength. Villages under 1,000 people are not counted and a whole city counts once its centre is inside a zone, so figures show exposure, not the number of people harmed. In tests against official reports they are within about ×2.',
+        methodText: 'People living inside each wind zone, from the GHS-POP 2020 population grid (~1 km), using the storm’s measured wind radii (JTWC) where available, otherwise typical radii for its strength. Figures show exposure — people within reach of those winds — not the number harmed. Storm-force exposure is closest to officially reported “people affected” (e.g. Phailin 2013: 1.08 crore vs 1.32 crore reported).',
       },
       fc: {
         title: 'Forecast', officialSub: 'Official forecast ({src}) — always follow IMD.', aiSub: 'Experimental AI forecast (INSAT-3DS + IMERG) — shown for comparison only.',
@@ -125,7 +125,7 @@ export const STRINGS_STORM = {
         analogs: 'समान तूफ़ानों से क्या हुआ', analogsText: 'हमारे रिकॉर्ड में समान तीव्रता के तूफ़ान (माध्यिका):',
         source: 'स्रोत', zone: { core: 'केंद्र', storm: 'तूफ़ानी', gale: 'तेज़' },
         method: 'यह अनुमान कैसे लगाया जाता है',
-        methodText: 'हर पवन क्षेत्र में 1,000+ आबादी वाले कस्बों की जनसंख्या (GeoNames), जहाँ उपलब्ध हो तूफ़ान के मापे गए पवन दायरे (JTWC) से, अन्यथा उसकी तीव्रता के सामान्य दायरे से। 1,000 से कम आबादी वाले गाँव नहीं गिने जाते और पूरा शहर गिना जाता है यदि उसका केंद्र क्षेत्र में हो, इसलिए ये आंकड़े जोखिम दिखाते हैं, नुकसान झेलने वालों की संख्या नहीं। आधिकारिक रिपोर्टों से तुलना में ये लगभग ×2 के भीतर हैं।',
+        methodText: 'हर पवन क्षेत्र में रहने वाले लोग, GHS-POP 2020 जनसंख्या ग्रिड (~1 किमी) से; जहाँ उपलब्ध हो तूफ़ान के मापे गए पवन दायरे (JTWC), अन्यथा उसकी तीव्रता के सामान्य दायरे। ये आँकड़े जोखिम दिखाते हैं — इन हवाओं की पहुँच में लोग — नुकसान झेलने वालों की संख्या नहीं। तूफ़ानी हवा क्षेत्र आधिकारिक “प्रभावित लोगों” के सबसे क़रीब है (जैसे फैलिन 2013: 1.08 करोड़ बनाम 1.32 करोड़ रिपोर्ट)।',
       },
       fc: {
         title: 'पूर्वानुमान', officialSub: 'आधिकारिक पूर्वानुमान ({src}) — हमेशा IMD का पालन करें।', aiSub: 'प्रयोगात्मक AI पूर्वानुमान (INSAT-3DS + IMERG) — केवल तुलना के लिए।',

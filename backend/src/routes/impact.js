@@ -103,7 +103,8 @@ router.get('/major', cacheMiddleware, async (_req, res, next) => {
         const rows = await trackOf(s.sid);
         const st = rows.length ? trackStats(rows) : null;
         majorCache.push({ ...s, peak_wind_kt: st?.peak_wind_kt ?? null, peak_grade: st?.peak_grade ?? null,
-          people_gale_zone: rows.length ? impact.exposure(rows).people_gale_zone : null });
+          // headline figure: people in the storm-force (≥ 50 kt) zone, closest to reported "people affected"
+          ...(rows.length ? (({ people_gale_zone, people_storm_zone }) => ({ people_gale_zone, people_storm_zone }))(impact.exposure(rows)) : {}) });
       }
       majorCache.sort((a, b) => b.season - a.season);
     }

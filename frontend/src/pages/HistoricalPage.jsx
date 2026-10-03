@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
+import { applyIndiaBoundaries } from '../utils/indiaBoundaries';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Link } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, ArrowRight, Wind } from 'lucide-react';
@@ -66,6 +67,7 @@ export default function HistoricalPage() {
     });
     map.current = m;
     m.on('load', () => {
+      applyIndiaBoundaries(m);
       m.addSource('tracks', { type: 'geojson', data: EMPTY });
       m.addLayer({ id: 'seg', type: 'line', source: 'tracks', layout: { 'line-cap': 'round' },
         paint: { 'line-color': ['match', ['get', 'grade'], ...Object.entries(IMD_COLORS).flat(), '#64748b'],

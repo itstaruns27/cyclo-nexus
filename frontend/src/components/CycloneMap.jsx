@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
+import { applyIndiaBoundaries } from '../utils/indiaBoundaries';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from '../i18n/translations';
 import { useData } from '../context/DataContext';
@@ -138,6 +139,7 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
     m.addControl(new maplibregl.FullscreenControl(), 'bottom-right');
 
     m.on('load', () => {
+      applyIndiaBoundaries(m);
       const date = gibsDate();
       for (const [key, cfg] of Object.entries(GIBS_LAYERS)) {
         m.addSource(`gibs-${key}`, { type: 'raster', tiles: [cfg.url.replace('{time}', date)], tileSize: 256,
