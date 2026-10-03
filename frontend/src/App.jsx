@@ -6,8 +6,10 @@ import HomePage from './pages/HomePage';
 import ExpertPage from './pages/ExpertPage';
 import HistoricalPage from './pages/HistoricalPage';
 import AlertsPage from './pages/AlertsPage';
+import StormPage from './pages/StormPage';
 import './index.css';
 import './styles/site.css';
+import './styles/storm.css';
 
 export default function App() {
   return (
@@ -16,9 +18,10 @@ export default function App() {
         <Routes>
           <Route element={<SiteLayout />}>
             <Route index element={<HomePage />} />
-            <Route path="alerts" element={<div className="site-container page-pad"><AlertsPage /></div>} />
-            <Route path="history" element={<div className="site-container page-pad"><HistoricalPage /></div>} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="history" element={<HistoricalPage />} />
             <Route path="expert" element={<ExpertPage />} />
+            <Route path="storm/:id" element={<StormPage />} />
             {/* Old URLs from the dashboard layout */}
             <Route path="historical" element={<Navigate to="/history" replace />} />
             <Route path="forecast" element={<Navigate to="/expert#forecast" replace />} />

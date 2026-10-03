@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Users, AlertOctagon, Building2, HeartCrack, IndianRupee } from 'lucide-react';
 import { t } from '../../i18n/translations';
 import { fill } from '../../i18n/strings_site';
@@ -79,14 +80,14 @@ export default function ImpactSection({ lead, lang }) {
           </div>
           <div className="grid-3 impact-cards">
             {major.storms.slice(0, 6).map(s => (
-              <article key={s.sid} className="impact-card">
+              <Link key={s.sid} to={`/storm/${s.sid}`} className="impact-card">
                 <header><h4>{s.name}</h4><span>{s.season} · {s.countries.join(', ')}</span></header>
                 <dl>
                   <div><dt>{t(lang, 'impact.deaths')}</dt><dd>{s.deaths?.toLocaleString(lang) ?? '—'}</dd></div>
                   <div><dt>{t(lang, 'impact.loss')}</dt><dd>{inr(s.damage_inr, lang)}</dd></div>
                   <div><dt>{t(lang, 'impact.people')}</dt><dd>{compact(s.people_gale_zone, lang)}</dd></div>
                 </dl>
-              </article>
+              </Link>
             ))}
           </div>
           <p className="impact-note">{t(lang, 'impact.note')}</p>

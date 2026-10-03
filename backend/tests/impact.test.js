@@ -30,3 +30,29 @@ describe('impact analogs', () => {
     expect(impact.analogs(20, {})).toBeNull();
   });
 });
+
+describe('exposure with measured wind radii (quadrants)', () => {
+  const { exposure, placeLabel } = require('../src/services/impact');
+  // Puri ≈ 19.80°N 85.83°E. A storm 60 km SW of Puri with gale winds only in its NE quadrant reaches it;
+  // the same storm with gale winds only in the SW quadrant must not.
+  const base = { lat: 19.4, lon: 85.4, kt: 60, r50_ne: 0, r50_se: 0, r50_sw: 0, r50_nw: 0, r64_ne: 0, r64_se: 0, r64_sw: 0, r64_nw: 0 };
+  const names = e => e.largest_towns.map(t => t.name);
+
+  it('counts towns only inside the quadrant that has gale-force winds', () => {
+    const ne = exposure([{ ...base, r34_ne: 60, r34_se: 0, r34_sw: 0, r34_nw: 0 }]);
+    const sw = exposure([{ ...base, r34_ne: 0, r34_se: 0, r34_sw: 60, r34_nw: 0 }]);
+    expect(names(ne)).toContain('Puri');
+    expect(names(sw)).not.toContain('Puri');
+    expect(ne.radii_source).toMatch(/measured/);
+  });
+
+  it('falls back to typical radii when none were measured', () => {
+    const e = exposure([{ lat: 19.4, lon: 85.4, kt: 60 }]);
+    expect(e.people_gale_zone).toBeGreaterThan(0);
+    expect(e.radii_source).toMatch(/typical/);
+  });
+
+  it('names places people know', () => {
+    expect(placeLabel(19.81, 85.83).name).toBe('Puri');
+  });
+});

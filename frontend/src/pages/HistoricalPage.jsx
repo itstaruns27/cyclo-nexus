@@ -1,60 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Link } from 'react-router-dom';
+import { Search, ChevronLeft, ChevronRight, ArrowRight, Wind } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { useData } from '../context/DataContext';
-import { api } from '../services/api';
-import { IMD_COLORS } from '../types/cyclone';
-import { compact, inr } from '../utils/site';
+import { api, API_BASE } from '../services/api';
+import { IMD_COLORS, IMD_SCALE } from '../types/cyclone';
 
+/**
+ * Past storms (IBTrACS North Indian Ocean, 1980 → today): search any storm by name, browse a season
+ * as cards, see all of the season's tracks on one map. Every storm opens its full page (/storm/:sid).
+ */
 const EMPTY = { type: 'FeatureCollection', features: [] };
+const KMH = 1.852;
+const basinName = (b, lang) => t(lang, `storm.basin.${b === 'AS' ? 'AS' : b === 'BB' ? 'BOB' : 'NIO'}`);
+const fmt = (iso, lang) => new Date(iso).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const catLabel = g => IMD_SCALE.find(c => c.category === g)?.label || '';
 
-function trackGeoJSON(storm) {
-  if (!storm) return EMPTY;
-  const coords = storm.points.map(p => [Number(p.longitude), Number(p.latitude)]);
-  return {
-    type: 'FeatureCollection',
-    features: [
-      { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { kind: 'line' } },
-      ...storm.points.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [Number(p.longitude), Number(p.latitude)] },
-        properties: { kind: 'point', grade: p.grade || '', time: p.iso_time, wind: p.wind_kt } })),
-    ],
-  };
-}
-
-const nf = (n, lang) => (n == null ? '—' : Number(n).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN'));
-
-/** Track statistics, exposure and recorded losses of one past storm (backend /impact/storm/:sid). */
-function StormImpact({ d, lang }) {
-  const st = d.stats; const e = d.exposure; const r = d.recorded;
-  const kmh = kt => (kt == null ? '—' : `${Math.round(kt * 1.852)} km/h`);
-  return (
-    <div className="panel storm-impact">
-      <div className="panel-header"><h3>{d.name || r?.name || t(lang, 'historicalPage.unnamed')} ({d.season}) · {t(lang, 'hist.details')}</h3></div>
-      <div className="impact-kv">
-        <div><span>{t(lang, 'hist.duration')}</span><strong>{Math.round(st.duration_h / 24 * 10) / 10} {t(lang, 'hist.days')}</strong></div>
-        <div><span>{t(lang, 'hist.distance')}</span><strong>{nf(st.distance_km, lang)} km</strong></div>
-        <div><span>{t(lang, 'hist.peakWind')}</span><strong>{kmh(st.peak_wind_kt)}</strong></div>
-        <div><span>{t(lang, 'hist.minPressure')}</span><strong>{st.min_pressure_hpa ?? '—'} hPa</strong></div>
-        <div><span>{t(lang, 'hist.peakGrade')}</span><strong>{st.peak_grade || '—'}</strong></div>
-        <div><span>{t(lang, 'hist.landfall')}</span><strong>{st.landfall ? `${st.landfall.lat.toFixed(1)}° N, ${st.landfall.lon.toFixed(1)}° E · ${kmh(st.landfall.wind_kt)}` : t(lang, 'hist.noLandfall')}</strong></div>
-        <div><span>{t(lang, 'impact.x.peopleGale')}</span><strong>{compact(e.people_gale_zone, lang)}</strong></div>
-        <div><span>{t(lang, 'impact.x.peopleCore')}</span><strong>{compact(e.people_core, lang)}</strong></div>
-        <div><span>{t(lang, 'impact.deaths')}</span><strong>{r ? nf(r.deaths, lang) : t(lang, 'hist.notRecorded')}</strong></div>
-        <div><span>{t(lang, 'impact.loss')}</span><strong>{r ? inr(r.damage_inr, lang) : t(lang, 'hist.notRecorded')}</strong></div>
-      </div>
-      {e.largest_towns.length > 0 && (
-        <p className="impact-towns">
-          <span>{t(lang, 'impact.towns')}:</span>
-          {e.largest_towns.slice(0, 8).map(tn => <span key={`${tn.name}-${tn.min_distance_km}`} className={`town-chip ${tn.zone}`}>{tn.name}</span>)}
-        </p>
-      )}
-      <p className="muted-small method-note">
-        {r ? <>{r.deaths_note ? `${r.deaths_note}. ` : ''}<a href={r.source} target="_blank" rel="noopener noreferrer">{t(lang, 'impact.x.source')}</a> · </> : null}
-        {t(lang, 'hist.exposureNote')}
-      </p>
-    </div>
-  );
+function useStormSearch(q) {
+  const [res, setRes] = useState([]);
+  useEffect(() => {
+    if (q.trim().length < 2) { setRes([]); return undefined; }
+    const id = setTimeout(() => {
+      fetch(`${API_BASE}/historical/search?q=${encodeURIComponent(q.trim())}`).then(r => r.json()).then(b => setRes(b.data || [])).catch(() => setRes([]));
+    }, 220);
+    return () => clearTimeout(id);
+  }, [q]);
+  return res;
 }
 
 export default function HistoricalPage() {
@@ -62,114 +35,139 @@ export default function HistoricalPage() {
   const [seasons, setSeasons] = useState([]);
   const [season, setSeason] = useState(null);
   const [storms, setStorms] = useState([]);
-  const [storm, setStorm] = useState(null);
-  const [error, setError] = useState(null);
-  const [impact, setImpact] = useState(null);
+  const [tracks, setTracks] = useState({});
+  const [hover, setHover] = useState(null);
+  const [q, setQ] = useState('');
+  const results = useStormSearch(q);
   const mapEl = useRef(null);
   const map = useRef(null);
+  const ready = useRef(false);
 
   useEffect(() => {
-    api.getSeasons().then(s => { setSeasons(s); setSeason((s.find(x => x.storms >= 3) || s[0])?.season ?? null); }).catch(e => setError(e.message));
+    api.getSeasons().then(s => { setSeasons(s); setSeason((s.find(x => x.storms >= 3) || s[0])?.season ?? null); }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!season) return;
-    setStorm(null);
-    api.getStorms(season).then(setStorms).catch(e => setError(e.message));
+    setStorms([]);
+    setTracks({});
+    api.getStorms(season).then(list => {
+      setStorms(list);
+      Promise.all(list.map(s => api.getStorm(s.sid).then(d => [s.sid, d]).catch(() => [s.sid, null])))
+        .then(pairs => setTracks(Object.fromEntries(pairs.filter(p => p[1]))));
+    }).catch(() => {});
   }, [season]);
 
   useEffect(() => {
-    map.current = new maplibregl.Map({
+    const m = new maplibregl.Map({
       container: mapEl.current, style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-      center: [82, 15], zoom: 3.4, attributionControl: { compact: true },
+      center: [80, 15], zoom: 3.3, attributionControl: { compact: true },
       cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
     });
-    map.current.on('load', () => {
-      map.current.addSource('track', { type: 'geojson', data: EMPTY });
-      map.current.addLayer({ id: 'track-line', type: 'line', source: 'track', filter: ['==', ['get', 'kind'], 'line'],
-        paint: { 'line-color': '#f97316', 'line-width': 2.5 } });
-      map.current.addLayer({ id: 'track-points', type: 'circle', source: 'track', filter: ['==', ['get', 'kind'], 'point'],
-        paint: { 'circle-radius': 4, 'circle-stroke-width': 1, 'circle-stroke-color': '#fff',
-          'circle-color': ['match', ['get', 'grade'], ...Object.entries(IMD_COLORS).flat(), '#94a3b8'] } });
+    map.current = m;
+    m.on('load', () => {
+      m.addSource('tracks', { type: 'geojson', data: EMPTY });
+      m.addLayer({ id: 'seg', type: 'line', source: 'tracks', layout: { 'line-cap': 'round' },
+        paint: { 'line-color': ['match', ['get', 'grade'], ...Object.entries(IMD_COLORS).flat(), '#64748b'],
+          'line-width': ['case', ['get', 'hl'], 4.5, 2.2], 'line-opacity': ['case', ['get', 'dim'], 0.25, 0.95] } });
+      ready.current = true;
+      m.fire('cnx-ready');
     });
-    return () => map.current.remove();
+    return () => { ready.current = false; m.remove(); };
   }, []);
 
-  const openStorm = async sid => {
-    setImpact(null);
-    api.getStormImpact(sid).then(setImpact).catch(() => {});
-    const s = await api.getStorm(sid).catch(() => null);
-    setStorm(s);
-    const src = map.current?.getSource('track');
-    if (src && s) {
-      src.setData(trackGeoJSON(s));
-      const b = new maplibregl.LngLatBounds();
-      s.points.forEach(p => b.extend([Number(p.longitude), Number(p.latitude)]));
-      map.current.fitBounds(b, { padding: 40, maxZoom: 6, duration: 800 });
+  const geo = useMemo(() => {
+    const feats = [];
+    for (const [sid, d] of Object.entries(tracks)) {
+      const pts = d.points;
+      for (let i = 0; i < pts.length - 1; i++) {
+        feats.push({ type: 'Feature', properties: { sid, grade: pts[i].grade || '', hl: hover === sid, dim: hover != null && hover !== sid },
+          geometry: { type: 'LineString', coordinates: [[Number(pts[i].longitude), Number(pts[i].latitude)], [Number(pts[i + 1].longitude), Number(pts[i + 1].latitude)]] } });
+      }
     }
-  };
+    return { type: 'FeatureCollection', features: feats };
+  }, [tracks, hover]);
 
-  const fmtDate = iso => new Date(iso).toISOString().slice(0, 10);
+  useEffect(() => {
+    const m = map.current;
+    const apply = () => m.getSource('tracks')?.setData(geo);
+    if (ready.current) apply(); else m?.once('cnx-ready', apply);
+  }, [geo]);
+
+  const idx = seasons.findIndex(s => s.season === season);
+  const kt = s => s.max_wind_kt || 0;
+  const strongest = storms.length ? [...storms].sort((a, b) => kt(b) - kt(a))[0] : null;
 
   return (
-    <div className="page">
-      <h2 className="page-title">{t(lang, 'historicalPage.title')}</h2>
-      <p className="page-subtitle">{t(lang, 'historicalPage.subtitle')}</p>
-      {error && <p className="empty-note">{error}</p>}
-      {storms.length > 0 && (() => {
-        const kt = s => s.max_wind_kt || 0;
-        const strongest = [...storms].sort((a, b) => kt(b) - kt(a))[0];
-        return (
-          <div className="season-summary">
-            <div><strong>{storms.length}</strong><span>{t(lang, 'hist.systems')}</span></div>
-            <div><strong>{storms.filter(s => kt(s) >= 34).length}</strong><span>{t(lang, 'hist.cyclones')}</span></div>
-            <div><strong>{storms.filter(s => kt(s) >= 64).length}</strong><span>{t(lang, 'hist.severe')}</span></div>
-            <div><strong>{strongest.name || t(lang, 'historicalPage.unnamed')}</strong>
-              <span>{t(lang, 'hist.strongest')}{strongest.max_wind_kt ? ` · ${Math.round(strongest.max_wind_kt * 1.852)} km/h` : ''}</span></div>
-          </div>
-        );
-      })()}
-      <div className="historical-grid">
-        <div className="panel">
-          <div className="panel-header">
-            <label>
-              {t(lang, 'historicalPage.season')}{' '}
-              <select className="lang-select" value={season ?? ''} onChange={e => setSeason(Number(e.target.value))}>
-                {seasons.map(s => <option key={s.season} value={s.season}>{s.season} ({s.storms} {t(lang, 'historicalPage.storms')})</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="table-scroll">
-            <table className="data-table clickable">
-              <thead>
-                <tr>
-                  <th>{t(lang, 'historicalPage.dates')}</th><th>Name</th><th>{t(lang, 'historicalPage.basin')}</th>
-                  <th>{t(lang, 'historicalPage.peak')}</th><th>{t(lang, 'historicalPage.maxWind')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storms.map(s => (
-                  <tr key={s.sid} onClick={() => openStorm(s.sid)} className={storm?.sid === s.sid ? 'selected' : ''}>
-                    <td>{fmtDate(s.start_time)} → {fmtDate(s.end_time)}</td>
-                    <td>{s.name || t(lang, 'historicalPage.unnamed')}</td>
-                    <td>{s.subbasin === 'AS' ? 'Arabian Sea' : s.subbasin === 'BB' ? 'Bay of Bengal' : s.subbasin || '—'}</td>
-                    <td>{s.peak_grade ? <span className="cat-chip" style={{ background: IMD_COLORS[s.peak_grade] }}>{s.peak_grade}</span> : '—'}</td>
-                    <td>{s.max_wind_kt != null ? `${Math.round(s.max_wind_kt * 1.852)} km/h` : '—'}</td>
-                  </tr>
+    <div className="history-page">
+      <header className="alerts-hero">
+        <div className="site-container">
+          <h1>{t(lang, 'historicalPage.title')}</h1>
+          <p>{t(lang, 'historicalPage.subtitle')}</p>
+          <div className="storm-search">
+            <Search size={18} />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={t(lang, 'hist2.search')} aria-label={t(lang, 'hist2.search')} />
+            {results.length > 0 && (
+              <ul className="search-results">
+                {results.map(r => (
+                  <li key={r.sid}>
+                    <Link to={`/storm/${r.sid}`}>
+                      <span className="sr-dot" style={{ background: IMD_COLORS[r.peak_grade] || '#94a3b8' }} />
+                      <b>{r.name}</b><em>{r.season}</em>
+                      <span>{r.peak_grade || '—'} · {r.max_wind_kt ? `${Math.round(r.max_wind_kt * KMH)} km/h` : '—'} · {basinName(r.subbasin, lang)}</span>
+                    </Link>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+            )}
           </div>
         </div>
-        <div className="panel map-panel">
-          <div className="panel-header">
-            <h3>{storm ? `${storm.name || t(lang, 'historicalPage.unnamed')} (${storm.season}) · ${storm.points.length} ${t(lang, 'historicalPage.points')}`
-              : t(lang, 'historicalPage.select')}</h3>
+      </header>
+
+      <div className="site-container history-body">
+        <div className="season-bar">
+          <button type="button" className="icon-btn" disabled={idx >= seasons.length - 1} onClick={() => setSeason(seasons[idx + 1].season)} aria-label="Previous season"><ChevronLeft size={18} /></button>
+          <select className="season-select" value={season ?? ''} onChange={e => setSeason(Number(e.target.value))} aria-label={t(lang, 'historicalPage.season')}>
+            {seasons.map(s => <option key={s.season} value={s.season}>{s.season} · {s.storms} {t(lang, 'historicalPage.storms')}</option>)}
+          </select>
+          <button type="button" className="icon-btn" disabled={idx <= 0} onClick={() => setSeason(seasons[idx - 1].season)} aria-label="Next season"><ChevronRight size={18} /></button>
+          {storms.length > 0 && (
+            <div className="season-stats">
+              <span><b>{storms.length}</b> {t(lang, 'hist.systems')}</span>
+              <span><b>{storms.filter(s => kt(s) >= 34).length}</b> {t(lang, 'hist.cyclones')}</span>
+              <span><b>{storms.filter(s => kt(s) >= 64).length}</b> {t(lang, 'hist.severe')}</span>
+              {strongest && <span>{t(lang, 'hist.strongest')}: <b>{strongest.name || t(lang, 'historicalPage.unnamed')}</b></span>}
+            </div>
+          )}
+        </div>
+
+        <div className="history-grid">
+          <div className="storm-cards">
+            {storms.map(s => (
+              <Link key={s.sid} to={`/storm/${s.sid}`} className={`storm-card${hover === s.sid ? ' hl' : ''}`}
+                style={{ '--cat': IMD_COLORS[s.peak_grade] || '#94a3b8' }}
+                onMouseEnter={() => setHover(s.sid)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(s.sid)} onBlur={() => setHover(null)}>
+                <span className="sc-bar" />
+                <div className="stc-main">
+                  <strong>{s.name || t(lang, 'historicalPage.unnamed')}</strong>
+                  <span>{fmt(s.start_time, lang)} → {fmt(s.end_time, lang)} · {basinName(s.subbasin, lang)}</span>
+                </div>
+                <div className="stc-side">
+                  {s.peak_grade && <span className="cat-badge" style={{ '--cat': IMD_COLORS[s.peak_grade] }} title={catLabel(s.peak_grade)}>{s.peak_grade}</span>}
+                  <span className="stc-wind"><Wind size={13} /> {s.max_wind_kt ? `${Math.round(s.max_wind_kt * KMH)} km/h` : '—'}</span>
+                </div>
+                <ArrowRight size={16} className="stc-go" />
+              </Link>
+            ))}
           </div>
-          <div ref={mapEl} className="historical-map" />
+          <div className="history-map-card">
+            <div ref={mapEl} className="history-map" />
+            <ul className="map-key">
+              {IMD_SCALE.map(c => <li key={c.category}><i style={{ background: IMD_COLORS[c.category] }} />{c.category}</li>)}
+            </ul>
+          </div>
         </div>
       </div>
-      {impact && <StormImpact d={impact} lang={lang} />}
     </div>
   );
 }

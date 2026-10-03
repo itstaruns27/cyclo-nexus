@@ -1,5 +1,6 @@
 import { STRINGS_V4, mergeStrings } from './strings_v4';
 import { STRINGS_SITE } from './strings_site';
+import { STRINGS_STORM } from './strings_storm';
 
 const translations = {
   en: {
@@ -77,6 +78,7 @@ const translations = {
 // v4 strings (official vs satellite layers, new pages)
 mergeStrings(translations, STRINGS_V4);
 mergeStrings(translations, STRINGS_SITE);
+mergeStrings(translations, STRINGS_STORM);
 
 // Deep merge helper: falls back to English for missing keys
 function deepGet(obj, path, fallback) {

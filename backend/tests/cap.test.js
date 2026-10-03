@@ -50,8 +50,8 @@ describe('CAP alert', () => {
   });
 
   it('covers the current position and official forecast points up to 72 h only', () => {
-    expect(threatCircles(official)).toEqual(['15.20,87.40 250', '17.00,86.50 250']);
-    expect(tag(x, 'circle')).toEqual(['15.20,87.40 250', '17.00,86.50 250', '15.20,87.40 250', '17.00,86.50 250']);
+    expect(threatCircles(official)).toEqual(['15.20,87.40 161', '17.00,86.50 185']);
+    expect(tag(x, 'circle')).toEqual(['15.20,87.40 161', '17.00,86.50 185', '15.20,87.40 161', '17.00,86.50 185']);
   });
 
   it('escapes XML special characters', () => {

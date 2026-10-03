@@ -83,6 +83,11 @@ export const api = {
     return (await getJson('/impact/climatology')).data;
   },
 
+  /** Everything about one storm (past IBTrACS SID or active cyclone_id) for the storm page. */
+  async getStormProfile(id, lang) {
+    return (await getJson(`/storms/${encodeURIComponent(id)}/profile?lang=${encodeURIComponent(lang)}`, { allow404: true }))?.data || null;
+  },
+
   async getStorm(sid) {
     return (await getJson(`/historical/storms/${encodeURIComponent(sid)}`, { allow404: true }))?.data || null;
   },

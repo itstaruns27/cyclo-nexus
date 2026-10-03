@@ -20,7 +20,9 @@ const ok = (res, data) => res.json({ success: true, data, timestamp: new Date().
 
 async function trackOf(sid) {
   const [rows] = await pool.query(
-    `SELECT iso_time, latitude AS lat, longitude AS lon, wind_kt AS kt, pressure_hpa, grade, dist2land_km, name, season, subbasin
+    `SELECT iso_time, latitude AS lat, longitude AS lon, wind_kt AS kt, pressure_hpa, grade, dist2land_km, name, season, subbasin,
+            r34_ne, r34_se, r34_sw, r34_nw, r50_ne, r50_se, r50_sw, r50_nw, r64_ne, r64_se, r64_sw, r64_nw,
+            rmw_nm, roci_nm, storm_speed_kt, storm_dir_deg
        FROM besttrack_points WHERE sid = ? ORDER BY iso_time`, [sid]);
   return rows;
 }

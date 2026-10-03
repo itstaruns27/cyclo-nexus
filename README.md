@@ -136,7 +136,9 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | | SMS / WhatsApp / push notifications; registration of the CAP feed with SACHET | 🗺️ |
 | **Web** | Public home page, live map (satellite / wind / rain / SST), tap-anywhere cyclone check, "check my area", safety guide, emergency numbers | ✅ |
 | | Expert panel (analysis, forecasts, impact, advisories, climatology, system health) | ✅ |
-| | Past-storms explorer with per-storm impact | ✅ |
+| | Storm page for every cyclone, past or active (`/storm/:id`): track by category with time slider and wind-field area, intensity charts, life cycle (landfall, rapid intensification, ACE, time per category), impact zones, recorded losses, forecasts + advisory, all positions (CSV), similar storms | ✅ |
+| | Past-storms explorer: search any storm by name, season cards, all season tracks on one map | ✅ |
+| | Redesigned alerts page: alert cards with audience advice, colour key, preparedness, emergency numbers, CAP links | ✅ |
 | | Installable PWA, offline-first: last advisory, forecast and alerts stay readable without network, clearly marked "saved at …" | ✅ |
 | **Ops** | HMAC-SHA256 + gzip webhooks, replay protection, heartbeat, "data delayed" banner | ✅ |
 | | Free-tier deployment kit (Oracle VM + Hostinger + Vercel), Dockerfile | ✅ written · 🔄 deploying |
@@ -729,6 +731,8 @@ flowchart TB
 | `GET` | `/api/v1/cyclones/:id` | One system with history and forecasts |
 | `GET` | `/api/v1/cyclones/:id/forecast` | GeoJSON track + forecast (official and AI, 5 horizons) |
 | `GET` | `/api/v1/cyclones/:id/advisory?lang=en\|hi` | Advisory for a specific cyclone |
+| `GET` | `/api/v1/storms/:id/profile?lang=` | Everything about one storm (IBTrACS SID or active id): life cycle, track with wind radii, impact, forecasts, similar storms |
+| `GET` | `/api/v1/historical/search?q=` | Storms by name, all seasons |
 | `GET` | `/api/v1/alerts/cap.atom` · `/alerts/:id/cap.xml` | CAP 1.2 alerts (en-IN + hi-IN, official systems only) and Atom index for SACHET / alert aggregators |
 | `GET` | `/api/v1/weather/wind-grid` | Cached 10 m wind field (Open-Meteo, 3°, 20–130°E × 20°S–40°N) |
 | `GET` | `/api/v1/weather/place?lat&lon` | Nearest named town with distance and direction |

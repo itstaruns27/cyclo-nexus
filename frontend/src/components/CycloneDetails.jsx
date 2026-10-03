@@ -111,6 +111,7 @@ export default function CycloneDetails() {
 
       <div className="cyclone-panel-actions">
         {official && <Link className="btn btn-primary" to="/alerts">{t(lang, 'panel.viewAdvisory')} →</Link>}
+        <Link className="btn btn-outline" to={`/storm/${encodeURIComponent(c.cyclone_id)}`}>{t(lang, 'alertsX.details')}</Link>
         <Link className="btn btn-outline" to="/forecast">{t(lang, 'panel.viewForecast')}</Link>
         {c.source_url && (
           <a className="btn btn-outline" href={c.source_url} target="_blank" rel="noopener noreferrer"

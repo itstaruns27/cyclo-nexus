@@ -31,11 +31,11 @@ export default function WarningBar() {
           <AlertTriangle size={18} className="warn-icon" />
           <strong className="warn-level">{t(lang, `warn.level.${level}`)}</strong>
           {showDemoBadge(s) && <span className="demo-badge">{t(lang, 'demo.badge')}</span>}
-          <span className="warn-text">
+          <Link to={`/storm/${encodeURIComponent(s.cyclone_id)}`} className="warn-text warn-storm">
             {fill(t(lang, 'warn.storm'), { cat: catName(s, lang), name, sea: seaName(s, lang) })}
             {s.movement ? fill(t(lang, 'warn.moving'), { dir: s.movement.dir, speed: s.movement.speed }) : ''}.{' '}
             <span className="warn-follow">{t(lang, 'warn.follow')}</span>
-          </span>
+          </Link>
           <Link to="/alerts" className="warn-link">{t(lang, 'warn.advice')} <ArrowRight size={14} /></Link>
         </div>
       </div>,

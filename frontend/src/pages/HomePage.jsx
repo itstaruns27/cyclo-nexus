@@ -108,6 +108,9 @@ function Hero({ lead, lang, loaded }) {
           <div className="hero-actions">
             <a href="#safety" className="btn-solid">{t(lang, 'home.whatToDo')} <ArrowRight size={16} /></a>
             <a href="#area" className="btn-ghost"><MapPin size={16} /> {t(lang, 'home.checkArea')}</a>
+            {lead && state !== 'clear' && (
+              <Link to={`/storm/${encodeURIComponent(lead.cyclone_id)}`} className="btn-ghost">{t(lang, 'alertsX.details')} <ArrowRight size={16} /></Link>
+            )}
           </div>
         </div>
 

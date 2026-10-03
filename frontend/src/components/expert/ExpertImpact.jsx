@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { t } from '../../i18n/translations';
 import { useData } from '../../context/DataContext';
 import { api } from '../../services/api';
@@ -107,7 +108,7 @@ export default function ExpertImpact() {
               <tbody>
                 {major.storms.map(s => (
                   <tr key={s.sid}>
-                    <td><strong>{s.name}</strong><div className="muted-small">{s.countries.join(', ')}</div></td>
+                    <td><Link className="storm-link" to={`/storm/${s.sid}`}>{s.name}</Link><div className="muted-small">{s.countries.join(', ')}</div></td>
                     <td>{s.season}</td>
                     <td>{s.peak_grade || '—'} · {ktToKmh(s.peak_wind_kt) ?? '—'} km/h</td>
                     <td>{nf(s.deaths, lang)}{s.deaths_note ? ' *' : ''}</td>
