@@ -127,7 +127,7 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | | Grad-CAM explainability | 🔄 module + tests present, not yet in live path |
 | | Forecast cone of uncertainty around the official track (IMD method and radii: 35–350 km at 6–72 h) | ✅ |
 | | AI ensemble forecasts | 🗺️ |
-| **Impact** | People and towns in the strong-wind zone and core, now and along the forecast track | ✅ |
+| **Impact** | People and towns in the gale (≥ 63 km/h), storm-force (≥ 93 km/h) and destructive (≥ 118 km/h) zones, using each storm's measured JTWC quadrant wind radii (typical radii when unmeasured); de-duplicated GeoNames towns | ✅ |
 | | Typical deaths / damage of similar recorded storms (median, in ₹) | ✅ |
 | | Storm-surge and inundation layers (INCOIS) | 🗺️ |
 | **Alerts** | Template advisories for fishermen / public / administration in English + Hindi | ✅ |
