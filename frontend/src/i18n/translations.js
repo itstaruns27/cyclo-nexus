@@ -1,6 +1,7 @@
 import { STRINGS_V4, mergeStrings } from './strings_v4';
 import { STRINGS_SITE } from './strings_site';
 import { STRINGS_STORM } from './strings_storm';
+import { STRINGS_REGIONAL } from './regional';
 
 const translations = {
   en: {
@@ -79,6 +80,7 @@ const translations = {
 mergeStrings(translations, STRINGS_V4);
 mergeStrings(translations, STRINGS_SITE);
 mergeStrings(translations, STRINGS_STORM);
+mergeStrings(translations, STRINGS_REGIONAL);
 
 // Deep merge helper: falls back to English for missing keys
 function deepGet(obj, path, fallback) {

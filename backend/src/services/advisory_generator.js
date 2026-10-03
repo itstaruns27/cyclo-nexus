@@ -8,8 +8,8 @@
  *   RED ≥ 118 km/h (VSCS+), ORANGE ≥ 62 km/h (CS/SCS), YELLOW ≥ 31 km/h (D/DD).
  * Satellite watch areas get an informational notice, never an alert level.
  *
- * Languages: en, hi. Other UI languages receive English with `fallback: true`
- * (safety text should be reviewed by native speakers before adding more).
+ * Languages: en, hi here; ta, te, ml, bn, or, kn, mr in advisory_regional.js (same templates).
+ * Unknown languages receive English with `fallback: true`.
  */
 
 const CATEGORY_NAMES = {
@@ -77,6 +77,27 @@ const TEXT = {
       + 'प्राधिकरण भारत मौसम विज्ञान विभाग (mausam.imd.gov.in) है; हमेशा IMD और राज्य आपदा प्रबंधन प्राधिकरण के निर्देशों का पालन करें।',
   },
 };
+
+const REGIONAL = require('./advisory_regional');
+const fillT = (tpl, v) => tpl.replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
+
+/** Template set for a regional language in the same shape as TEXT[lang]. */
+function regionalText(R) {
+  return {
+    summary: (c, cat, sea) => fillT(c.name ? R.summaryNamed : R.summaryUnnamed, { ...c, cat, sea }),
+    movement: m => fillT(R.movement, { ...m, dir: R.dirs[Math.round(m.bearing_deg / 22.5) % 16] }),
+    watch: (c, sea) => fillT(R.watch, { ...c, sea }),
+    fishermen: Object.fromEntries(Object.entries(R.fishermen).map(([k, v]) => [k, sea => fillT(v, { sea })])),
+    public: R.public,
+    administration: R.administration,
+    disclaimer: R.disclaimer,
+  };
+}
+for (const [lang, R] of Object.entries(REGIONAL)) {
+  TEXT[lang] = regionalText(R);
+  CATEGORY_NAMES[lang] = R.cat;
+  SEA[lang] = R.sea;
+}
 
 const DIRS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 const DIRS_HI = ['उत्तर', 'उत्तर-उत्तरपूर्व', 'उत्तरपूर्व', 'पूर्व-उत्तरपूर्व', 'पूर्व', 'पूर्व-दक्षिणपूर्व', 'दक्षिणपूर्व', 'दक्षिण-दक्षिणपूर्व',

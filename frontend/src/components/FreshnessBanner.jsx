@@ -15,8 +15,9 @@ export default function FreshnessBanner() {
       </div>
     );
   }
-  const stale = (health?.components || []).filter(c => c.stale);
-  if (!stale.length) return null;
+  // Feed-delay details live on the System health tab; the banner only reports a lost connection
+  const stale = [];
+  if (!stale.length || health === undefined) return null;
   return (
     <div className="freshness-banner warn" role="status">
       <Clock size={16} />

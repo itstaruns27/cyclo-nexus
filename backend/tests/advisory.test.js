@@ -51,9 +51,22 @@ describe('buildAdvisory', () => {
 
   it('builds Hindi text and falls back to English for unsupported languages', () => {
     expect(buildAdvisory(official, 'hi').threat_summary).toMatch(/गंभीर चक्रवाती तूफान/);
-    const ta = buildAdvisory(official, 'ta');
-    expect(ta.language).toBe('en');
-    expect(ta.fallback).toBe(true);
+    const gu = buildAdvisory(official, 'gu');
+    expect(gu.language).toBe('en');
+    expect(gu.fallback).toBe(true);
+  });
+
+  it('builds regional-language advisories with every number filled in', () => {
+    for (const lang of ['ta', 'te', 'ml', 'bn', 'or', 'kn', 'mr']) {
+      const a = buildAdvisory(official, lang);
+      expect(a.language).toBe(lang);
+      expect(a.fallback).toBe(false);
+      const text = [a.threat_summary, a.directives_fishermen, a.directives_public, a.directives_administration].join(' ');
+      expect(text).not.toMatch(/\{\w+\}/);
+      expect(a.threat_summary).toContain('MONTHA');
+      expect(a.threat_summary).toContain('95');
+    }
+    expect(buildAdvisory(official, 'ta').threat_summary).toMatch(/தீவிரப் புயல்/);
   });
 
   it('never issues an alert level for satellite watch areas', () => {

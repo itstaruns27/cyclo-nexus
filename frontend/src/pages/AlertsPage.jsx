@@ -168,6 +168,7 @@ export default function AlertsPage() {
             {EMERGENCY.map(n => (
               <a key={n} href={`tel:${n}`} className="call-card">
                 <Phone size={18} /><strong>{n}</strong><span>{t(lang, `home.help.n${n}`)}</span>
+              <em className="tap">{t(lang, 'alertsX.tapToCall')}</em>
               </a>
             ))}
           </div>

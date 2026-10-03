@@ -79,7 +79,7 @@ function Hero({ lead, lang, loaded }) {
   };
 
   return (
-    <section className={`hero hero-${state}`} style={accent ? { '--accent': accent } : undefined}>
+    <section className={`hero hero-${state}${state === 'storm' ? ` hero-lvl-${level.toLowerCase()}` : ''}`} style={accent ? { '--accent': accent } : undefined}>
       <div className="site-container hero-inner">
         <div className="hero-copy">
           <span className="eyebrow">
@@ -175,10 +175,11 @@ export default function HomePage() {
         <AreaCheck systems={systems} lang={lang} />
       </Section>
 
-      <Section id="impact" title={t(lang, lead && isActiveOfficial(lead) ? 'impact.titleActive' : 'impact.title')}
-        text={t(lang, lead && isActiveOfficial(lead) ? 'impact.textActive' : 'impact.text')}>
-        <ImpactSection lead={lead} lang={lang} />
-      </Section>
+      {lead && isActiveOfficial(lead) && (
+        <Section id="impact" title={t(lang, 'impact.titleActive')} text={t(lang, 'impact.textActive')} tone="alert">
+          <ImpactSection lead={lead} lang={lang} />
+        </Section>
+      )}
 
       <Section id="safety" title={t(lang, 'home.safetyTitle')} text={t(lang, 'home.safetyText')} tone="soft">
         <div className="grid-3">
@@ -199,6 +200,7 @@ export default function HomePage() {
               <Phone size={18} />
               <strong>{n}</strong>
               <span>{t(lang, `home.help.n${n}`)}</span>
+              <em className="tap">{t(lang, 'alertsX.tapToCall')}</em>
             </a>
           ))}
         </div>

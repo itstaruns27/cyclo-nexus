@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { Users, AlertOctagon, Building2, HeartCrack, IndianRupee } from 'lucide-react';
 import { t } from '../../i18n/translations';
 import { fill } from '../../i18n/strings_site';
@@ -9,12 +10,11 @@ import { compact, isActiveOfficial, inr } from '../../utils/site';
 /**
  * Home-page impact module (plain language).
  * Active official storm → people living in its path (now + forecast) and what similar past storms caused.
- * Otherwise → recorded toll of major past cyclones.
+ * Shown on the home page only while an official storm is active (past storms live on /history).
  */
 export default function ImpactSection({ lead, lang }) {
   const active = lead && isActiveOfficial(lead) ? lead : null;
   const [storm, setStorm] = useState(null);
-  const [major, setMajor] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,10 +22,6 @@ export default function ImpactSection({ lead, lang }) {
     if (active) api.getCycloneImpact(active.cyclone_id).then(d => { if (!cancelled) setStorm(d); }).catch(() => {});
     return () => { cancelled = true; };
   }, [active?.cyclone_id, active?.observation_time]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    api.getMajorImpacts().then(setMajor).catch(() => {});
-  }, []);
 
   const exp = storm?.exposure_forecast || storm?.exposure_now;
 
@@ -68,30 +64,8 @@ export default function ImpactSection({ lead, lang }) {
               {fill(t(lang, 'impact.analogs'), { list: storm.analogs.storms.map(s => `${s.name} (${s.season})`).join(', ') })}
             </p>
           )}
+          <Link className="btn-solid impact-more" to={`/storm/${encodeURIComponent(active.cyclone_id)}#impact`}>{t(lang, 'alertsX.details')} <ArrowRight size={16} /></Link>
         </div>
-      )}
-
-      {major && (
-        <>
-          {active && <h3 className="impact-sub">{t(lang, 'impact.pastTitle')}</h3>}
-          <div className="impact-totals">
-            <div><strong>{compact(major.totals.deaths, lang)}</strong><span>{fill(t(lang, 'impact.totalDeaths'), { n: major.storms.length })}</span></div>
-            <div><strong>{inr(major.totals.damage_inr, lang)}</strong><span>{t(lang, 'impact.totalLoss')}</span></div>
-          </div>
-          <div className="grid-3 impact-cards">
-            {major.storms.slice(0, 6).map(s => (
-              <Link key={s.sid} to={`/storm/${s.sid}`} className="impact-card">
-                <header><h4>{s.name}</h4><span>{s.season} · {s.countries.join(', ')}</span></header>
-                <dl>
-                  <div><dt>{t(lang, 'impact.deaths')}</dt><dd>{s.deaths?.toLocaleString(lang) ?? '—'}</dd></div>
-                  <div><dt>{t(lang, 'impact.loss')}</dt><dd>{inr(s.damage_inr, lang)}</dd></div>
-                  <div><dt>{t(lang, 'impact.people')}</dt><dd>{compact(s.people_gale_zone, lang)}</dd></div>
-                </dl>
-              </Link>
-            ))}
-          </div>
-          <p className="impact-note">{t(lang, 'impact.note')}</p>
-        </>
       )}
     </>
   );

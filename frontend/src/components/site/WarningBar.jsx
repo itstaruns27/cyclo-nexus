@@ -13,13 +13,12 @@ import { catName, isActiveOfficial, rankSystems, seaName, showDemoBadge } from '
  * Renders nothing when all is clear.
  */
 export default function WarningBar() {
-  const { lang, systems, health, offline, savedAt } = useData();
+  const { lang, systems, offline, savedAt } = useData();
   const ranked = rankSystems(systems);
   const official = ranked.filter(isActiveOfficial);
   const watches = ranked.filter(isWatch);
-  const satellite = health?.components?.find(c => c.component === 'satellite_pipeline');
-  const official_feed = health?.components?.find(c => c.component === 'official_feed');
-  const delayed = !offline && (satellite?.stale || official_feed?.stale);
+  // Data-delay notices are not shown to the public; only a lost connection is (offline / saved copy)
+  const delayed = false;
 
   const rows = [];
   for (const s of official) {

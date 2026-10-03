@@ -64,6 +64,7 @@ export const STRINGS_STORM = {
       unnamed: 'Unnamed system',
     },
     hist2: { search: 'Search any cyclone by name — e.g. Fani, Amphan, Phailin' },
+    map: { rainNow: 'Rain measured by satellite', rainNote: 'Observed rain rate (not a forecast). Satellite rain data arrives about 4–6 hours after it falls.' },
     alertsX: {
       title: 'Cyclone alerts', subtitle: 'Official advisories for the North Indian Ocean, updated every 30 minutes.',
       allClear: 'No cyclone warnings right now', allClearText: 'No official system is active in the Bay of Bengal or the Arabian Sea. We keep watching the satellites every 30 minutes.',
@@ -76,7 +77,7 @@ export const STRINGS_STORM = {
       who: 'Advice for', details: 'Full storm details', updated: 'Updated', watchTitle: 'Satellite watch',
       watchText: 'Our satellites see storm clouds organising. This is not an official warning.',
       emergency: 'Emergency numbers', prepare: 'Get ready', prepareText: 'Simple steps that keep your family safe.',
-      feeds: 'For agencies and developers',
+      feeds: 'For agencies and developers', tapToCall: 'Tap to call',
     },
   },
   hi: {
@@ -137,6 +138,7 @@ export const STRINGS_STORM = {
       unnamed: 'अनाम प्रणाली',
     },
     hist2: { search: 'किसी भी चक्रवात को नाम से खोजें — जैसे फणि, अम्फान, फैलिन' },
+    map: { rainNow: 'उपग्रह द्वारा मापी गई वर्षा', rainNote: 'देखी गई वर्षा दर (पूर्वानुमान नहीं)। उपग्रह वर्षा डेटा गिरने के लगभग 4–6 घंटे बाद आता है।' },
     alertsX: {
       title: 'चक्रवात अलर्ट', subtitle: 'उत्तर हिंद महासागर के आधिकारिक परामर्श, हर 30 मिनट में अपडेट।',
       allClear: 'अभी कोई चक्रवात चेतावनी नहीं', allClearText: 'बंगाल की खाड़ी या अरब सागर में कोई आधिकारिक प्रणाली सक्रिय नहीं है। हम हर 30 मिनट में उपग्रह देखते रहते हैं।',
@@ -149,7 +151,7 @@ export const STRINGS_STORM = {
       who: 'किसके लिए सलाह', details: 'तूफ़ान का पूरा विवरण', updated: 'अपडेट', watchTitle: 'उपग्रह निगरानी',
       watchText: 'हमारे उपग्रह तूफ़ानी बादलों को संगठित होते देख रहे हैं। यह आधिकारिक चेतावनी नहीं है।',
       emergency: 'आपातकालीन नंबर', prepare: 'तैयार रहें', prepareText: 'आसान कदम जो आपके परिवार को सुरक्षित रखते हैं।',
-      feeds: 'एजेंसियों और डेवलपर्स के लिए',
+      feeds: 'एजेंसियों और डेवलपर्स के लिए', tapToCall: 'कॉल करें',
     },
   },
 };

@@ -97,6 +97,28 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
   const [map, setMap] = useState(null);
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [inspect, setInspect] = useState(null);
+  const [rainTime, setRainTime] = useState(null);
+
+  // Rain: pin every tile to the newest IMERG half-hour GIBS has (DescribeDomains), so all tiles show
+  // the same moment and the map can say which moment that is (IMERG Early runs ~4–6 h behind real time).
+  useEffect(() => {
+    if (!map) return undefined;
+    let cancelled = false;
+    const now = new Date();
+    const from = new Date(now.getTime() - 3 * 86400e3).toISOString().slice(0, 10);
+    fetch('https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi?SERVICE=WMTS&REQUEST=DescribeDomains&VERSION=1.0.0'
+      + `&LAYER=IMERG_Precipitation_Rate_30min&TILEMATRIXSET=2km&TIME=${from}/${now.toISOString().slice(0, 19)}Z`)
+      .then(r => r.text())
+      .then(xml => {
+        const m = xml.match(/\/(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\/PT30M/);
+        if (!m || cancelled) return;
+        const src = map.getSource('gibs-rainfall');
+        if (src?.setTiles) src.setTiles([GIBS_LAYERS.rainfall.url.replace('/default/default/', `/default/${m[1]}/`)]);
+        setRainTime(m[1]);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [map]);
 
   // Create the map once
   useEffect(() => {
@@ -230,6 +252,14 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
         {inspect && (inspector === 'public'
           ? <CycloneChancePanel lngLat={inspect} onClose={() => setInspect(null)} />
           : <WeatherInspector lngLat={inspect} onClose={() => setInspect(null)} />)}
+        {activeTab === 'rainfall' && (
+          <div className="rain-key">
+            <strong>{t(lang, 'map.rainNow')}</strong>
+            {rainTime && <span>{new Date(rainTime).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })} UTC · NASA IMERG</span>}
+            <div className="rain-scale"><i /><b>0.5</b><b>2</b><b>10</b><b>50 mm/h</b></div>
+            <small>{t(lang, 'map.rainNote')}</small>
+          </div>
+        )}
         {legend && <div className="map-legend">
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#ef4444' }} /><span>{t(lang, 'map.currentPos')}</span></div>
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#cbd5e1' }} /><span>{t(lang, 'map.history')}</span></div>
@@ -239,10 +269,12 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#a855f7', opacity: 0.6 }} /><span>{t(lang, 'map.watchArea')}</span></div>
           <div className="map-legend-hint">{t(lang, 'map.clickHint')}</div>
         </div>}
-        <div className={`map-status ${status}`}>
-          <div className="live-dot" />
-          <span>{status === 'live' ? t(lang, 'map.liveData') : t(lang, `map.${status}`)}</span>
-        </div>
+        {status !== 'delayed' && (
+          <div className={`map-status ${status}`}>
+            <div className="live-dot" />
+            <span>{status === 'live' ? t(lang, 'map.liveData') : t(lang, `map.${status}`)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
