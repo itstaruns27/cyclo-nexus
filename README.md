@@ -424,7 +424,9 @@ flowchart TD
 | **JTWC** | US DoD | io* .tcw warnings | ~6h | Position, intensity |
 | **IBTrACS** | NOAA NCEI | ACTIVE + NI archive (CSV) | ~6h | Best-track points |
 | **Open-Meteo / NASA GIBS** | open services | wind, SST, weather; map tiles | hourly / daily | map + point weather |
-| **GeoNames** | GeoNames (CC-BY) | towns ≥ 1,000 people | static | population exposure |
+| **GHS-POP 2020** | EU JRC (CC-BY 4.0) | 30″ gridded population | static | population exposure |
+| **Natural Earth (IND view)** | public domain | admin-0 boundaries, India point of view | static | map borders, country per cell |
+| **GeoNames** | GeoNames (CC-BY) | towns ≥ 1,000 people | static | place names |
 
 ---
 
@@ -779,25 +781,36 @@ flowchart TB
 
 ## 👥 Impact & Exposure Engine
 
-> **Files**: `backend/src/services/impact.js`, `backend/src/routes/impact.js`
+> **Files**: `backend/src/services/impact.js`, `backend/src/routes/impact.js`, `backend/scripts/build_geo.py`
 
 ```mermaid
 flowchart LR
     TR["Storm track<br/>(observed + official forecast)"] --> D["Densify every 25 km"]
-    D --> Z["Wind zones per point<br/>core ≤ 60 km where ≥ 64 kt<br/>strong wind 150 / 200 / 250 km<br/>where ≥ 34 / 48 / 64 kt"]
-    Z --> G["10,779 towns ≥ 1,000 people<br/>(GeoNames, 1° spatial index)"]
-    G --> O1["People + towns exposed<br/>by zone and country"]
+    D --> Z["Quadrant wind field per point<br/>34 / 50 / 64 kt radii<br/>(JTWC measured, else IBTrACS climatology)"]
+    Z --> G["GHS-POP 2020 population grid<br/>2.5′ cells (~4.6 km)"]
+    G --> O1["People in gale / storm-force / core zones<br/>by country (India-view boundaries)"]
     TR --> A["Recorded storms with<br/>peak wind within ±20 kt"]
     A --> O2["Typical deaths and damage<br/>(median, ₹ at event-year rate)"]
 ```
 
-| Example | Result |
-|---|---|
-| Cyclone **Amphan** (2020) | 5.6 crore people in strong-wind zone, 1.4 crore in core; 128 deaths; ₹1.02 lakh crore damage |
-| **Puri** — local history | 65 systems within 150 km since 1980, 13 of them cyclones; strongest: 1999 Super Cyclone |
-| **11 major recorded cyclones** (1999–2021) | ~1.5 lakh lives lost, ~₹3.38 lakh crore damage |
+| Check against official reports | Storm-force zone (≥ 50 kt) | Reported "affected" |
+|---|---|---|
+| **Phailin** (2013) | 1.08 crore | 1.32 crore |
+| **Fani** (2019) | 3.15 crore (all countries) | 1.65 crore (Odisha only) |
 
-Exposure is a **lower bound** (villages under 1,000 people are not listed) and zones use typical radii, not measured wind fields — both are stated on screen. Recorded losses are approximate published figures with a source link per storm.
+Figures show **exposure** — people within reach of those winds — not the number harmed. Recorded losses are approximate published figures with a source link per storm. "Check your area" uses the same grid (people within 50 km).
+
+### Data files
+
+| File | Source | Licence | Rebuild |
+|---|---|---|---|
+| `backend/data/pop_grid.bin`, `pop_grid.json` | GHS-POP R2023A, epoch 2020, 30″ (EU JRC), summed to 2.5′ over 40–110°E, 15°S–45°N | CC-BY 4.0 | `python backend/scripts/build_geo.py` |
+| `backend/data/country_grid.bin`, `frontend/public/geo/boundaries_in.geojson` | Natural Earth 10 m admin-0, **India point of view** (boundaries as recognised by the Government of India) | public domain | same script |
+| `backend/data/geonames_nio.json` | GeoNames cities ≥ 1,000 people (place names and "largest places" lists only) | CC-BY 4.0 | `python backend/scripts/build_towns.py` |
+| `backend/data/wind_radii_climatology.json` | IBTrACS v04 USA (JTWC) wind radii, median by intensity | public domain (NOAA) | `node backend/scripts/import_ibtracs.js` |
+| `backend/data/cyclone_impacts.json` | IMD / NDMA / EM-DAT published deaths and damage | cited per storm | hand-curated |
+
+The raw downloads (`data/static/geo/`, ~300 MB) are kept out of git; the scripts above document exactly how each derived file is made.
 
 ---
 

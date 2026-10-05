@@ -56,3 +56,10 @@ describe('exposure with measured wind radii (quadrants)', () => {
     expect(placeLabel(19.81, 85.83).name).toBe('Puri');
   });
 });
+
+describe('people within a radius (population grid)', () => {
+  it('counts a metro on land and nobody in the open sea', () => {
+    expect(impact.peopleWithin(13.08, 80.27, 50)).toBeGreaterThan(8e6); // Chennai
+    expect(impact.peopleWithin(15, 88, 50)).toBe(0); // central Bay of Bengal
+  });
+});

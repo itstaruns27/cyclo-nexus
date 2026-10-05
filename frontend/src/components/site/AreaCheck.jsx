@@ -105,7 +105,7 @@ export default function AreaCheck({ systems, lang }) {
                   {nearest
                     ? `${nearest.s.cyclone_name || (isActiveOfficial(nearest.s) ? catName(nearest.s, lang) : t(lang, 'warn.watchLabel'))} · ${fill(t(lang, 'home.distance'), {
                       km: Math.round(nearest.km).toLocaleString(lang),
-                      dir: compass(place.lat, place.lon, Number(nearest.s.current_lat), Number(nearest.s.current_lon)),
+                      dir: compass(place.lat, place.lon, Number(nearest.s.current_lat), Number(nearest.s.current_lon), lang),
                     })}`
                     : t(lang, 'home.noStorm')}
                 </strong>

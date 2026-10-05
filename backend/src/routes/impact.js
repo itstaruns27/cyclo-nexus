@@ -134,7 +134,7 @@ router.get('/near', cacheMiddleware, async (req, res, next) => {
     }
     const list = [...storms.values()].sort((a, b) => new Date(b.time) - new Date(a.time));
     const cyclonic = list.filter(s => (s.max_wind_kt || 0) >= 34);
-    const people = impact.townsNear(lat, lon, 50).reduce((sum, [t]) => sum + t[3], 0);
+    const people = impact.peopleWithin(lat, lon, 50);
     const [minSeason] = (await pool.query('SELECT MIN(season) AS s FROM besttrack_points'))[0];
     ok(res, {
       radius_km: radius, since: minSeason.s,

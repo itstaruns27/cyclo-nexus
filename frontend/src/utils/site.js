@@ -6,6 +6,17 @@ import { isOfficial, isWatch } from '../types/cyclone';
 
 const ALERT_RANK = { RED: 3, ORANGE: 2, YELLOW: 1 };
 const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+/** 8-point compass names per language (English keeps the short codes). */
+const DIR_NAMES = {
+  hi: ['उत्तर', 'उत्तर-पूर्व', 'पूर्व', 'दक्षिण-पूर्व', 'दक्षिण', 'दक्षिण-पश्चिम', 'पश्चिम', 'उत्तर-पश्चिम'],
+  ta: ['வடக்கு', 'வடகிழக்கு', 'கிழக்கு', 'தென்கிழக்கு', 'தெற்கு', 'தென்மேற்கு', 'மேற்கு', 'வடமேற்கு'],
+  te: ['ఉత్తరం', 'ఈశాన్యం', 'తూర్పు', 'ఆగ్నేయం', 'దక్షిణం', 'నైరుతి', 'పడమర', 'వాయవ్యం'],
+  ml: ['വടക്ക്', 'വടക്കുകിഴക്ക്', 'കിഴക്ക്', 'തെക്കുകിഴക്ക്', 'തെക്ക്', 'തെക്കുപടിഞ്ഞാറ്', 'പടിഞ്ഞാറ്', 'വടക്കുപടിഞ്ഞാറ്'],
+  bn: ['উত্তর', 'উত্তরপূর্ব', 'পূর্ব', 'দক্ষিণপূর্ব', 'দক্ষিণ', 'দক্ষিণপশ্চিম', 'পশ্চিম', 'উত্তরপশ্চিম'],
+  or: ['ଉତ୍ତର', 'ଉତ୍ତରପୂର୍ବ', 'ପୂର୍ବ', 'ଦକ୍ଷିଣପୂର୍ବ', 'ଦକ୍ଷିଣ', 'ଦକ୍ଷିଣପଶ୍ଚିମ', 'ପଶ୍ଚିମ', 'ଉତ୍ତରପଶ୍ଚିମ'],
+  kn: ['ಉತ್ತರ', 'ಈಶಾನ್ಯ', 'ಪೂರ್ವ', 'ಆಗ್ನೇಯ', 'ದಕ್ಷಿಣ', 'ನೈಋತ್ಯ', 'ಪಶ್ಚಿಮ', 'ವಾಯವ್ಯ'],
+  mr: ['उत्तर', 'ईशान्य', 'पूर्व', 'आग्नेय', 'दक्षिण', 'नैऋत्य', 'पश्चिम', 'वायव्य'],
+};
 
 export const isActiveOfficial = s => isOfficial(s) && !isWatch(s);
 
@@ -35,13 +46,20 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
   return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
 
+/** 8-point compass name for a bearing in degrees, in the given language. */
+export function dirWord(deg, lang) {
+  if (deg == null || !Number.isFinite(Number(deg))) return '';
+  const i = Math.round(((Number(deg) % 360) + 360) % 360 / 45) % 8;
+  return DIR_NAMES[lang]?.[i] || DIRS[i];
+}
+
 /** 8-point compass direction from point 1 towards point 2. */
-export function compass(lat1, lon1, lat2, lon2) {
+export function compass(lat1, lon1, lat2, lon2, lang) {
   const r = Math.PI / 180;
   const y = Math.sin((lon2 - lon1) * r) * Math.cos(lat2 * r);
   const x = Math.cos(lat1 * r) * Math.sin(lat2 * r) - Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r);
   const deg = (Math.atan2(y, x) / r + 360) % 360;
-  return DIRS[Math.round(deg / 45) % 8];
+  return dirWord(deg, lang);
 }
 
 /** Official systems strongest-alert first, then satellite watch areas. */

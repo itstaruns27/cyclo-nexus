@@ -63,7 +63,7 @@ export default function CycloneChancePanel({ lngLat, onClose }) {
             <div>
               <strong>{fill(t(lang, 'pin.stormNear'), { name: storm.s.cyclone_name || catName(storm.s, lang) })}</strong>
               <span>{fill(t(lang, 'pin.stormDist'), {
-                km: Math.round(storm.km), dir: compass(lat, lon, Number(storm.s.current_lat), Number(storm.s.current_lon)),
+                km: Math.round(storm.km), dir: compass(lat, lon, Number(storm.s.current_lat), Number(storm.s.current_lon), lang),
                 cat: catName(storm.s, lang),
               })}</span>
             </div>

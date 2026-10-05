@@ -2,9 +2,8 @@ import React from 'react';
 import { Wind, Droplets, Gauge, CloudRain, Waves, Cloud, Umbrella } from 'lucide-react';
 import { t } from '../../i18n/translations';
 import { weatherInfo } from '../../utils/weatherCodes';
+import { dirWord } from '../../utils/site';
 
-const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-const dirName = deg => (deg == null ? '' : DIRS[Math.round(deg / 45) % 8]);
 const f = (v, d, u) => (v == null ? '—' : `${Number(v).toFixed(d)}${u}`);
 
 /**
@@ -17,7 +16,7 @@ export default function WeatherReport({ cond, lang, compact = false }) {
   const NowIcon = now.Icon;
   const items = [
     [Droplets, t(lang, 'area.humidity'), f(cond.humidityPct, 0, '%')],
-    [Wind, t(lang, 'home.wind'), `${f(cond.windKmh, 0, ' km/h')} ${dirName(cond.windDirDeg)}`],
+    [Wind, t(lang, 'home.wind'), `${f(cond.windKmh, 0, ' km/h')} ${dirWord(cond.windDirDeg, lang)}`],
     [Wind, t(lang, 'wx.gusts'), f(cond.gustKmh, 0, ' km/h')],
     [CloudRain, t(lang, 'home.rain'), f(cond.precipTodayMm, 1, ' mm')],
     [Gauge, t(lang, 'home.pressure'), f(cond.mslpHpa, 0, ' hPa')],

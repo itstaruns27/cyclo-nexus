@@ -99,6 +99,25 @@ function townsNear(lat, lon, km) {
   return out;
 }
 
+/** Gridded population (GHS-POP 2020) within `km` of a point. */
+function peopleWithin(lat, lon, km) {
+  const { west, north, cell_deg: d, rows, cols } = GRID;
+  const kmLat = 111.2; const kmLon = 111.2 * Math.max(0.2, Math.cos(lat * R));
+  const r0 = Math.max(0, Math.floor((north - (lat + km / kmLat)) / d));
+  const r1 = Math.min(rows - 1, Math.floor((north - (lat - km / kmLat)) / d));
+  const c0 = Math.max(0, Math.floor((lon - km / kmLon - west) / d));
+  const c1 = Math.min(cols - 1, Math.floor((lon + km / kmLon - west) / d));
+  let sum = 0;
+  for (let r = r0; r <= r1; r++) {
+    const dy = (north - (r + 0.5) * d - lat) * kmLat;
+    for (let c = c0; c <= c1; c++) {
+      const dx = (west + (c + 0.5) * d - lon) * kmLon;
+      if (Math.hypot(dx, dy) <= km) sum += POP[r * cols + c];
+    }
+  }
+  return Math.round(sum);
+}
+
 /** Densify a track so zones are continuous between 6-hourly points (linear lat/lon/wind). */
 function densify(points, stepKm = 25) {
   const out = [];
@@ -256,6 +275,6 @@ function analogs(peakKt, maxWindBySid) {
 }
 
 module.exports = {
-  exposure, analogs, recordedFor, townsNear, haversineKm, galeRadiusKm, placeLabel, radiiKm, bearingDeg,
+  exposure, analogs, recordedFor, townsNear, peopleWithin, haversineKm, galeRadiusKm, placeLabel, radiiKm, bearingDeg,
   recordedNote: recorded.note, recordedStorms: recorded.storms, TOWN_COUNT: towns.length,
 };
