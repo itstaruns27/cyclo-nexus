@@ -55,6 +55,17 @@ router.get('/:id', cacheMiddleware, async (req, res, next) => {
 });
 
 // GET /api/v1/cyclones/:id/forecast — Get GeoJSON forecast
+// Grad-CAM image of the satellite intensity estimate (what the CNN looked at), JPEG
+router.get('/:id/heatmap', async (req, res, next) => {
+  try {
+    const img = await cycloneStore.getHeatmap(req.params.id);
+    if (!img) return res.status(404).json({ success: false, error: 'No satellite heatmap for this system' });
+    res.set('Cache-Control', 'public, max-age=600').type('image/jpeg').send(img);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:id/forecast', cacheMiddleware, async (req, res, next) => {
   try {
     const cyclone = await cycloneStore.getById(req.params.id);

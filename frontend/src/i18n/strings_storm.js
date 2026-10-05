@@ -13,7 +13,7 @@ export const STRINGS_STORM = {
       kpi: {
         peakWind: 'Peak wind', nowWind: 'Wind now', minPressure: 'Lowest pressure', nowPressure: 'Pressure now', peakCat: 'Strongest category',
         nowCat: 'Category now', duration: 'Lifetime', distance: 'Distance travelled', landfall: 'Landfall', noLandfall: 'Stayed at sea',
-        days: 'days', hours: 'h', movement: 'Moving', rank: 'Rank in basin', satEst: 'Satellite estimate {w} km/h (±{b}) · {g}',
+        days: 'days', hours: 'h', movement: 'Moving', rank: 'Rank in basin', satEst: 'Satellite estimate {w} km/h (±{b}) · {g}', heatCap: 'What the satellite AI looked at: warm colours mark the cloud features that raised its wind estimate.',
       },
       rankText: '#{rank} strongest of {n} storms in the {basin} since 1980',
       story: {
@@ -92,7 +92,7 @@ export const STRINGS_STORM = {
       kpi: {
         peakWind: 'अधिकतम हवा', nowWind: 'अभी हवा', minPressure: 'न्यूनतम दाब', nowPressure: 'अभी दाब', peakCat: 'सबसे तीव्र श्रेणी',
         nowCat: 'अभी श्रेणी', duration: 'जीवनकाल', distance: 'तय दूरी', landfall: 'तट से टकराव', noLandfall: 'समुद्र में ही रहा',
-        days: 'दिन', hours: 'घं', movement: 'गति', rank: 'क्षेत्र में स्थान', satEst: 'उपग्रह अनुमान {w} किमी/घंटा (±{b}) · {g}',
+        days: 'दिन', hours: 'घं', movement: 'गति', rank: 'क्षेत्र में स्थान', satEst: 'उपग्रह अनुमान {w} किमी/घंटा (±{b}) · {g}', heatCap: 'उपग्रह AI ने क्या देखा: गर्म रंग उन बादल संरचनाओं को दिखाते हैं जिनसे उसका हवा अनुमान बढ़ा।',
       },
       rankText: '1980 से {basin} के {n} तूफ़ानों में #{rank} सबसे तीव्र',
       story: {

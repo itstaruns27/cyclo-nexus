@@ -422,3 +422,6 @@ a.impact-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md);
 .rain-scale b { font-weight: 600; font-size: 0.72rem; }
 .rain-key small { color: #94a3b8; line-height: 1.4; }
 .satellite-est, .wc-sat { margin: 6px 0 0; font-size: 0.8rem; color: #0d9488; font-weight: 500; }
+.sat-heatmap { margin: 10px 0 0; }
+.sat-heatmap img { display: block; width: 100%; max-width: 192px; border-radius: 8px; }
+.sat-heatmap figcaption { margin-top: 6px; font-size: 0.75rem; color: var(--muted); }

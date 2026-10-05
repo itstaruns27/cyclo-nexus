@@ -14,6 +14,13 @@ const { getIMDCategory } = require('./imd_scale');
 
 const ACTIVE_STATUSES = ['active', 'watch'];
 
+/** The heatmap image is served by its own route; list and detail rows only say whether one exists. */
+function stripHeatmap(row) {
+  if (!row) return row;
+  const { ai_heatmap: heat, ...rest } = row;
+  return { ...rest, has_heatmap: Boolean(heat) };
+}
+
 class CycloneStore {
   async upsertFromWebhook(payload) {
     const conn = await pool.getConnection();
@@ -34,7 +41,8 @@ class CycloneStore {
       const aiFix = [lat, lon, obsTime, confidence, p.min_cloud_top_k ?? null, p.max_rain_mmhr ?? null, p.method || null];
       // Satellite intensity estimate (forecaster/intensity) — null when the model is off or not approved
       const si = p.satellite_intensity || null;
-      const sat = [si?.wind_kt ?? null, si?.band_kt ?? null, si?.imd_class ?? null, si == null ? null : (si.eye ? 1 : 0)];
+      const sat = [si?.wind_kt ?? null, si?.band_kt ?? null, si?.imd_class ?? null, si == null ? null : (si.eye ? 1 : 0),
+        typeof si?.heatmap === 'string' && si.heatmap.startsWith('data:image/jpeg;base64,') && si.heatmap.length < 200_000 ? si.heatmap : null];
 
       let cycloneId = meta.cyclone_id;
       let linked = false;
@@ -51,7 +59,7 @@ class CycloneStore {
         await conn.query(
           `UPDATE cyclones SET ai_fix_lat = ?, ai_fix_lon = ?, ai_fix_time = ?, ai_fix_confidence = ?,
              ai_min_cloud_top_k = ?, ai_max_rain_mmhr = ?, ai_method = ?,
-             ai_wind_kt = ?, ai_wind_band_kt = ?, ai_imd_category = ?, ai_eye = ? WHERE cyclone_id = ?`,
+             ai_wind_kt = ?, ai_wind_band_kt = ?, ai_imd_category = ?, ai_eye = ?, ai_heatmap = ? WHERE cyclone_id = ?`,
           [...aiFix, ...sat, cycloneId]
         );
       } else {
@@ -64,8 +72,8 @@ class CycloneStore {
              central_pressure_hpa, imd_category, obb_x_center, obb_y_center, obb_width, obb_height, obb_theta,
              detection_confidence, observation_time, inference_generated_at, source, status, summary,
              ai_fix_lat, ai_fix_lon, ai_fix_time, ai_fix_confidence, ai_min_cloud_top_k, ai_max_rain_mmhr, ai_method,
-             ai_wind_kt, ai_wind_band_kt, ai_imd_category, ai_eye)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ai_wind_kt, ai_wind_band_kt, ai_imd_category, ai_eye, ai_heatmap)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
              current_lat=VALUES(current_lat), current_lon=VALUES(current_lon),
              sustained_wind_kmh=VALUES(sustained_wind_kmh), sustained_wind_knots=VALUES(sustained_wind_knots),
@@ -78,7 +86,7 @@ class CycloneStore {
              ai_fix_confidence=VALUES(ai_fix_confidence), ai_min_cloud_top_k=VALUES(ai_min_cloud_top_k),
              ai_max_rain_mmhr=VALUES(ai_max_rain_mmhr), ai_method=VALUES(ai_method),
              ai_wind_kt=VALUES(ai_wind_kt), ai_wind_band_kt=VALUES(ai_wind_band_kt),
-             ai_imd_category=VALUES(ai_imd_category), ai_eye=VALUES(ai_eye)`,
+             ai_imd_category=VALUES(ai_imd_category), ai_eye=VALUES(ai_eye), ai_heatmap=VALUES(ai_heatmap)`,
           [
             cycloneId, meta.cyclone_name || null, meta.basin, lat, lon, windKmh, windKnots,
             p.central_pressure_hpa ?? 1008, getIMDCategory(windKmh),
@@ -159,7 +167,14 @@ class CycloneStore {
       [cycloneId]
     );
     const history = await this.getHistory(cycloneId);
-    return { ...cyclones[0], forecasts, history };
+    return { ...stripHeatmap(cyclones[0]), forecasts, history };
+  }
+
+  /** Grad-CAM JPEG of the satellite intensity estimate (Buffer), or null. */
+  async getHeatmap(cycloneId) {
+    const [rows] = await pool.query('SELECT ai_heatmap FROM cyclones WHERE cyclone_id = ?', [cycloneId]);
+    const uri = rows[0]?.ai_heatmap;
+    return uri ? Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64') : null;
   }
 
   async getHistory(cycloneId) {
@@ -178,7 +193,7 @@ class CycloneStore {
         ORDER BY (source LIKE 'OFFICIAL_%') DESC, (status = 'active') DESC, sustained_wind_kmh DESC`,
       [ACTIVE_STATUSES]
     );
-    return rows;
+    return rows.map(stripHeatmap);
   }
 
   async getPipelineStatus() {

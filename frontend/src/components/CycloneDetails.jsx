@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Wind, Activity, Navigation, Clock, Satellite, CloudRain, AlertOctagon, ExternalLink } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { fill } from '../i18n/strings_site';
+import { API_BASE } from '../services/api';
 import { useData } from '../context/DataContext';
 import { showDemoBadge } from '../utils/site';
 import { IMD_COLORS, IMD_SCALE, ALERT_COLORS, SOURCE_LABELS, isOfficial, isWatch } from '../types/cyclone';
@@ -98,6 +99,13 @@ export default function CycloneDetails() {
               <p className="satellite-est">{fill(t(lang, 'storm.kpi.satEst'), {
                 w: Math.round(Number(c.ai_wind_kt) * 1.852), b: c.ai_wind_band_kt != null ? Math.round(Number(c.ai_wind_band_kt) * 1.852) : '—',
                 g: c.ai_imd_category || '—' })}</p>
+            )}
+            {c.has_heatmap && (
+              <figure className="sat-heatmap">
+                <img src={`${API_BASE}/cyclones/${encodeURIComponent(c.cyclone_id)}/heatmap?t=${encodeURIComponent(c.ai_fix_time || '')}`}
+                  alt="" width={192} height={192} loading="lazy" onError={e => { e.currentTarget.parentElement.style.display = 'none'; }} />
+                <figcaption>{t(lang, 'storm.kpi.heatCap')}</figcaption>
+              </figure>
             )}
           </div>
         )}

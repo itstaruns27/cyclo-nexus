@@ -531,5 +531,6 @@
  "storm.fc.typErr": "Typical error",
  "storm.fc.ri": "Chance of rapid strengthening in the next 24 hours (by 56 km/h or more): {p}%",
  "storm.fc.riNote": "The usual chance is about 13%. In past seasons, when this showed 50% or more, rapid strengthening happened about 6 times in 10.",
- "storm.kpi.satEst": "Satellite estimate {w} km/h (±{b}) · {g}"
+ "storm.kpi.satEst": "Satellite estimate {w} km/h (±{b}) · {g}",
+ "storm.kpi.heatCap": "What the satellite AI looked at: warm colours mark the cloud features that raised its wind estimate."
 }

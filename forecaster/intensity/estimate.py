@@ -79,5 +79,15 @@ class SatelliteIntensity:
             kt = float(np.interp(row[d["col"]].iloc[0], d["src"], d["dst"]))
         kt = max(15.0, kt)
         _, _, _, eye = refine_centre(frame_u8, lat, lon)
-        return {"wind_kt": round(kt, 1), "band_kt": self.meta.get("error_band_kt_80"),
-                "imd_class": CLASSES[imd_class(kt)], "eye": bool(eye)}
+        out = {"wind_kt": round(kt, 1), "band_kt": self.meta.get("error_band_kt_80"),
+               "imd_class": CLASSES[imd_class(kt)], "eye": bool(eye)}
+        if self.cnn is not None:
+            try:
+                import base64
+                from forecaster.intensity.cnn import insat_crop
+                from forecaster.intensity.explain import heatmap_jpeg
+                jpg = heatmap_jpeg(self.cnn, insat_crop(frame_u8, lat, lon))
+                out["heatmap"] = "data:image/jpeg;base64," + base64.b64encode(jpg).decode()
+            except Exception:  # noqa: BLE001 — the explanation never blocks the estimate
+                pass
+        return out
