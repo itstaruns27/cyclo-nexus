@@ -119,3 +119,4 @@ data/hursat/
 !forecaster/weights/intensity_meta.json
 !forecaster/weights/intensity_global_ir.txt
 !forecaster/weights/intensity_cnn.pt
+data/genesis/
