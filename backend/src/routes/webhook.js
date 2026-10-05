@@ -4,13 +4,14 @@
  * Owner: Agent DELTA | Task 14
  *   POST /api/v1/webhook/inference  — satellite pipeline detections (GeoJSON)
  *   POST /api/v1/webhook/heartbeat  — pipeline run status (drives /health freshness)
+ *   POST /api/v1/webhook/forecast   — AI consensus track for an official system (source AI_CONSENSUS)
  */
 
 const express = require('express');
 const router = express.Router();
 const { verifyWebhookSignature } = require('../middleware/webhook_auth');
 const { invalidateCache } = require('../middleware/cache');
-const { validateWebhookPayload, validateHeartbeat } = require('../utils/validators');
+const { validateWebhookPayload, validateHeartbeat, validateForecastPayload } = require('../utils/validators');
 const cycloneStore = require('../services/cyclone_store');
 
 router.post('/inference', verifyWebhookSignature, async (req, res, next) => {
@@ -34,6 +35,21 @@ router.post('/inference', verifyWebhookSignature, async (req, res, next) => {
       linked: result.linked,
       timestamp: new Date().toISOString(),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/forecast', verifyWebhookSignature, async (req, res, next) => {
+  try {
+    const validation = validateForecastPayload(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ success: false, error: 'Payload validation failed', details: validation.errors });
+    }
+    const stored = await cycloneStore.replaceConsensusForecast(validation.data);
+    if (stored) invalidateCache();
+    res.status(stored ? 200 : 404).json({ success: stored, cyclone_id: validation.data.cyclone_id,
+      ...(stored ? {} : { error: 'No official system with this id' }) });
   } catch (err) {
     next(err);
   }

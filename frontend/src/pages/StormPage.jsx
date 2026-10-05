@@ -134,7 +134,8 @@ function ForecastTable({ list, lang, ai }) {
   return (
     <div className={`card fc-card${ai ? ' ai' : ''}`}>
       <table className="clean-table">
-        <thead><tr><th>{t(lang, 'storm.fc.hour')}</th><th>{t(lang, 'storm.fc.near')}</th><th>{t(lang, 'storm.fc.wind')}</th><th>{t(lang, 'storm.fc.cat')}</th></tr></thead>
+        <thead><tr><th>{t(lang, 'storm.fc.hour')}</th><th>{t(lang, 'storm.fc.near')}</th><th>{t(lang, 'storm.fc.wind')}</th><th>{t(lang, 'storm.fc.cat')}</th>
+          {ai && <th>{t(lang, 'storm.fc.typErr')}</th>}</tr></thead>
         <tbody>
           {list.map(f => (
             <tr key={f.hour}>
@@ -142,6 +143,7 @@ function ForecastTable({ list, lang, ai }) {
               <td>{f.place ? `${f.place.distance_km} km ${f.place.direction} of ${f.place.name}` : `${f.lat.toFixed(1)}°N ${f.lon.toFixed(1)}°E`}</td>
               <td>{Math.round(f.wind_kmh)} km/h</td>
               <td>{f.grade ? <CatBadge grade={f.grade} /> : '—'}</td>
+              {ai && <td>{f.verified_error_km != null ? `± ${Math.round(f.verified_error_km)} km` : '—'}</td>}
             </tr>
           ))}
         </tbody>
@@ -214,7 +216,7 @@ export default function StormPage() {
   const basinName = t(lang, `storm.basin.${d.basin}`);
   const landfall = L.landfalls[0];
   const officialSrc = d.forecasts ? Object.keys(d.forecasts).find(s => s.startsWith('OFFICIAL_')) : null;
-  const ai = d.forecasts?.AI_SATELLITE;
+  const ai = d.forecasts?.AI_CONSENSUS;
   const adv = d.advisory;
   const advColor = ALERT_COLORS[adv?.alert_level] || '#7c3aed';
   const navItems = [['track', 'track'], ['intensity', 'intensity'], ['impact', 'impact'],
@@ -383,6 +385,10 @@ export default function StormPage() {
               <div>
                 <h3 className="sub-h">{t(lang, 'storm.fc.aiSub')}</h3>
                 <ForecastTable list={ai} lang={lang} ai />
+                <p className="fc-note">{fill(t(lang, 'storm.fc.aiNote'), {
+                  run: ai[0]?.init_time ? fmtDT(ai[0].init_time, lang) : '—',
+                  models: (ai[0]?.members || []).join(', '),
+                })}</p>
               </div>
             )}
           </div>

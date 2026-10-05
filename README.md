@@ -34,7 +34,7 @@
 - [Module Deep Dive](#-module-deep-dive)
   - [Phase 1: Data Pipeline](#phase-1-data-pipeline--satellite-ingestion)
   - [Phase 2: Computer Vision](#phase-2-computer-vision--yolo-obb-cyclone-detection)
-  - [Phase 3: Trajectory Forecasting](#phase-3-trajectory-forecasting--convlstm--bi-gru)
+  - [Phase 3: Track & Intensity Prediction](#phase-3-track--intensity-prediction--ai-consensus-forecast)
   - [Phase 4: Backend API](#phase-4-backend-api-gateway)
   - [Phase 5: Frontend PWA](#phase-5-frontend-pwa--public-safety-interface)
 - [IMD Classification Scale](#-imd-7-tier-classification-scale)
@@ -84,7 +84,7 @@ The platform:
 
 1. **Ingests live satellite data** from ISRO's INSAT-3DS (via MOSDAC) and NASA GPM IMERG precipitation data every 30 minutes
 2. **Detects cyclones** using a custom **YOLO-OBB model** adapted for 4-channel multi-spectral satellite imagery, backed by a **physics-based satellite detector** that identifies organised deep convection
-3. **Forecasts trajectories** using a **ConvLSTM + Bi-GRU spatiotemporal neural network** with physics-informed loss functions (Atkinson-Holliday wind-pressure relationship)
+3. **Forecasts track and intensity** with an **AI consensus** led by ECMWF's machine-learning model (AIFS) and the ECMWF ensemble, verified on unseen 2025–26 storms at 58 / 109 / 139 km (24 / 48 / 72 h) — on par with IMD's official average
 4. **Classifies intensity** using the **IMD 7-tier scale** (Depression → Super Cyclonic Storm)
 5. **Generates multilingual public safety advisories** in English and Hindi with actionable directives for citizens, fishermen, and administration
 6. **Serves a real-time interactive map** through a responsive React PWA with MapLibre GL, showing official system tracking, AI-derived satellite analysis, and watch areas
@@ -123,10 +123,11 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | **AI** | 6-frame × 3-hour, 4-channel 1024² tensor assembly with LUT calibration | ✅ |
 | | Physics detector (Deviation-Angle Variance + cold cloud + rain + SST + land mask) | ✅ validated on real cases |
 | | YOLO-OBB oriented-box detector (serving pipeline) | ✅ serving · 🔄 retraining on real INSAT imagery |
-| | ConvLSTM + Bi-GRU **multi-horizon** forecaster (one head per 6/12/24/48/72 h) with Atkinson–Holliday loss | ✅ code + tests · 🔄 training on real windows |
+| | **AI consensus track + intensity forecast** (ECMWF AIFS + IFS ensemble, GFS, UKMET … fitted on 2018–24, tested on 2025–26: 58 / 109 / 139 km at 24 / 48 / 72 h) | ✅ verified · live behind `AI_FORECAST_ENABLED` |
+| | ConvLSTM + Bi-GRU forecaster and storm-centred image model | ❌ retired from the live path (failed against baselines) |
 | | Grad-CAM explainability | 🔄 module + tests present, not yet in live path |
 | | Forecast cone of uncertainty around the official track (IMD method and radii: 35–350 km at 6–72 h) | ✅ |
-| | AI ensemble forecasts | 🗺️ |
+| | AI consensus cone (67% of its own verified errors: 63 / 98 / 171 km at 24 / 48 / 72 h) | ✅ |
 | **Impact** | People in the gale (≥ 63 km/h), storm-force (≥ 93 km/h) and destructive (≥ 118 km/h) zones from the GHS-POP 2020 ~1 km population grid (rural areas included, no double counting), using each storm's measured JTWC quadrant wind radii; storm-force exposure matches official "people affected" within ~20–90% (Phailin 1.08 vs 1.32 crore) | ✅ |
 | | Typical deaths / damage of similar recorded storms (median, in ₹) | ✅ |
 | | Storm-surge and inundation layers (INCOIS) | 🗺️ |
@@ -158,11 +159,11 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 - **YOLO-OBB Deep Learning**: Oriented Bounding Box detection on 4-channel satellite imagery with custom weight surgery for multi-spectral input
 - Both systems work together: physics detector provides the primary watch signal; YOLO adds supplementary candidates
 
-### 🌀 Multi-Horizon Trajectory Forecasting
-- ConvLSTM + Bidirectional GRU architecture for spatiotemporal sequence prediction
-- Five forecast horizons, **one output head each**: **+6h, +12h, +24h, +48h, +72h**
-- Multi-task output: position (lat/lon deltas), wind intensity, pressure drop
-- Atkinson-Holliday physics constraint ensures wind-pressure consistency
+### 🌀 AI Consensus Track & Intensity Forecast
+- Blends ECMWF's AI model (AIFS), the 51-member ECMWF ensemble, GFS, UKMET and others from open data
+- Each model is moved towards the real-time storm position by a fraction learned from past storms
+- Track to 72 h with its own verified uncertainty cone; intensity from the models' predicted change
+- Verified on storms it never saw: 58 / 109 / 139 km at 24 / 48 / 72 h vs IMD's 72 / 112 / 156 km average
 
 ### 📊 IMD-Compliant Classification
 - All 7 IMD intensity tiers with deterministic classification from wind speed
@@ -297,9 +298,9 @@ flowchart LR
     end
 
     subgraph "3️⃣ Forecasting"
-        C1["ConvLSTM<br/>Spatial Encoder"]
-        C2["Bi-GRU<br/>Temporal Decoder"]
-        C3["Multi-Horizon<br/>Track + Intensity"]
+        C1["ECMWF AIFS + IFS ENS<br/>GFS · UKMET (open data)"]
+        C2["Position shift +<br/>selected consensus"]
+        C3["Track + intensity<br/>+ verified cone"]
     end
 
     subgraph "4️⃣ Backend"
@@ -340,7 +341,7 @@ flowchart LR
 |-------|-----------|---------|
 | **Satellite Ingestion** | Python, h5py, netCDF4, NumPy | Raw satellite data download, extraction & regridding |
 | **Computer Vision** | PyTorch, Ultralytics YOLOv8-OBB | Cyclone eye detection with oriented bounding boxes |
-| **Forecasting** | PyTorch (custom ConvLSTM + Bi-GRU) | Spatiotemporal trajectory & intensity prediction |
+| **Forecasting** | ecCodes (BUFR), pandas, NumPy | AI consensus of ECMWF AIFS / IFS ensemble / GFS tracks |
 | **Physics Engine** | Custom Pydantic models | Atkinson-Holliday wind-pressure validation |
 | **Inference Server** | FastAPI, Uvicorn | GPU/CPU model serving with memory guard |
 | **Backend API** | Express.js, Node.js 18+ | REST gateway, webhook ingest, advisory generation |
@@ -475,59 +476,42 @@ Only rotation augmentation in [-180°, +180°] is permitted, with synchronized t
 
 ---
 
-### Phase 3: Trajectory Forecasting — ConvLSTM + Bi-GRU
+### Phase 3: Track & Intensity Prediction — AI Consensus Forecast
 
-> **Directory**: `forecaster/`
+> **Directory**: `forecaster/guidance/` · report: [`docs/guidance_report.md`](docs/guidance_report.md)
 
-#### Neural Network Architecture
+Cyclo-Nexus forecasts where a storm will go by blending the world's best open forecast models, led by
+**ECMWF's machine-learning model AIFS**, and by learning from every past North Indian Ocean storm how much to trust each one.
 
 ```mermaid
-flowchart TB
-    INPUT["Input: (B, 6, 4, 1024, 1024)<br/>6-frame temporal sequence"]
-    
-    subgraph "CNN Spatial Stem"
-        CNN1["Conv2d(4→16) + ReLU + MaxPool<br/>1024 → 512"]
-        CNN2["Conv2d(16→32) + ReLU + MaxPool<br/>512 → 256"]
-        CNN3["Conv2d(32→64) + ReLU + MaxPool<br/>256 → 128"]
-        CNN4["Conv2d(64→64) + ReLU + MaxPool<br/>128 → 64"]
-    end
-
-    CONVLSTM["ConvLSTM Cell<br/>Spatial gates via Conv2d<br/>State: (B, 64, 64, 64)"]
-    
-    POOL["AdaptiveAvgPool2d(1)<br/>→ (B, 6, 64)"]
-    
-    GRU["Bidirectional GRU<br/>hidden=128<br/>→ (B, 6, 256)"]
-    
-    subgraph "Multi-Horizon Heads (one per lead time: 6 · 12 · 24 · 48 · 72 h)"
-        TRACK["Track Head<br/>Linear(256→2×5)<br/>Δlat, Δlon"]
-        WIND["Wind Head<br/>Linear(256→5)<br/>V_max (knots)"]
-        PRESSURE["Pressure Head<br/>Linear(256→5)<br/>ΔP (hPa)"]
-    end
-
-    INPUT --> CNN1 --> CNN2 --> CNN3 --> CNN4
-    CNN4 --> CONVLSTM --> POOL --> GRU
-    GRU --> TRACK
-    GRU --> WIND
-    GRU --> PRESSURE
+flowchart LR
+    E["ECMWF open data<br/>AIFS · IFS HRES · IFS ensemble (51) · AIFS ensemble<br/>tropical-cyclone track BUFR"] --> S
+    R["UCAR RAL ATCF a-decks<br/>GFS · GEFS · UKMET · CMC · NAVGEM"] --> S
+    J["Real-time JTWC position (CARQ)"] --> S["Shift each track towards the<br/>real-time position (fraction fitted per model)"]
+    S --> C["Selected consensus<br/>AIFS + IFS ensemble mean<br/>(fitted-weight blend as fallback)"]
+    C --> F["Track to 72 h + intensity<br/>(current + AIFS/GFS predicted change)"]
+    F --> K["Cone = 67% of its own verified errors"]
+    K --> W["Signed webhook → storm page & maps<br/>labelled “AI consensus (experimental)”"]
 ```
 
-#### Why the CNN Stem is Critical
+**How it was built and tested** (`python -m forecaster.guidance.build` then `python -m forecaster.guidance.consensus`):
+57 JTWC-numbered systems 2018–2026, ~780,000 forecast positions, verified against the JTWC best track.
+All choices (members, shift fractions, weights, cone) were made on seasons ≤ 2024; the 2025–26 storms
+(Shakhti, Montha, Senyar, Ditwah and others) were used only once, for the final test.
 
-Without spatial downsampling, maintaining ConvLSTM hidden states at full resolution would require:
-```
-4 × 64 × 1024 × 1024 × 4 bytes ≈ 1 GB per hidden state tensor
-```
-The four-layer CNN stem reduces the spatial footprint from **1024×1024 → 64×64** (a **256× area reduction**) before entering the recurrent loop, making the model trainable on consumer GPUs.
+| Unseen 2025–26 storms | 24 h | 48 h | 72 h |
+|---|---|---|---|
+| **Cyclo-Nexus AI consensus — track error** | **58 km** | **109 km** | **139 km** |
+| IMD official, long-period average 2019–23 | 72 km | 112 km | 156 km |
+| Persistence (no-skill baseline) | 153 km | 288 km | 358 km |
+| **AI consensus — intensity error** | **5 kt** | **7 kt** | **4 kt** |
 
-#### Forecast Horizons
+The IMD comparison is indicative (IMD verifies against its own best track). The forecast is published only when
+`AI_FORECAST_ENABLED=true` and the stored verification passed; the official IMD/JTWC forecast is always shown first.
 
-| Horizon | Lead Time | Primary Use |
-|---------|----------|-------------|
-| H₁ | +6 hours | Immediate tactical decisions |
-| H₂ | +12 hours | Evacuation planning |
-| H₃ | +24 hours | Resource pre-positioning |
-| H₄ | +48 hours | Strategic preparedness |
-| H₅ | +72 hours | Long-range awareness |
+The earlier full-domain ConvLSTM + Bi-GRU forecaster and the storm-centred image model (`forecaster/track_model.py`,
+48 h error 297 km) were retired from the live path after failing against these baselines — see
+[`docs/track_model_report.md`](docs/track_model_report.md).
 
 ---
 
@@ -952,8 +936,13 @@ cyclo-nexus/
 │   ├── preprocessing/          # Vision-specific transforms
 │   └── requirements.txt
 │
-├── forecaster/                 # Trajectory forecasting module
-│   ├── model/                  # ConvLSTM + Bi-GRU architecture
+├── forecaster/                 # Track & intensity prediction
+│   ├── guidance/               # AI consensus forecast (live)
+│   │   ├── sources.py          # ECMWF track BUFR, ATCF a-decks, IBTrACS truth
+│   │   ├── build.py            # Collects 2018→ guidance for every NIO storm
+│   │   ├── consensus.py        # Verification, fitting, docs/guidance_report.md
+│   │   └── live.py             # Publishes AI_CONSENSUS forecasts (signed webhook)
+│   ├── model/                  # ConvLSTM + Bi-GRU architecture (retired from live path)
 │   │   ├── spatiotemporal_forecaster.py  # Main model
 │   │   ├── conv_lstm.py        # ConvLSTM cell implementation
 │   │   └── bi_gru_decoder.py   # Bidirectional GRU decoder

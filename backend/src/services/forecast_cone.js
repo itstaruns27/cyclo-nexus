@@ -34,9 +34,10 @@ function coneRadiusKm(hour) {
 
 /**
  * @param {{hour:number, lat:number, lon:number}[]} nodes  analysis (hour 0) + official forecast points
+ * @param {(hour:number) => number} radiusKm  circle radius per lead time (default: IMD's)
  * @returns {number[][]|null}  closed [lon, lat] ring, or null with fewer than two usable nodes
  */
-function buildConeRing(nodes) {
+function buildConeRing(nodes, radiusKm = coneRadiusKm) {
   const pts = nodes
     .filter(p => p.hour >= 0 && p.hour <= MAX_HOUR && Number.isFinite(+p.lat) && Number.isFinite(+p.lon))
     .map(p => ({ hour: +p.hour, lat: +p.lat, lon: +p.lon }))
@@ -57,7 +58,7 @@ function buildConeRing(nodes) {
     const b = pts[i];
     for (let h = a.hour; h < b.hour || (i === pts.length - 1 && h === b.hour); h++) {
       const f = (h - a.hour) / (b.hour - a.hour);
-      c.push({ xy: toXY({ lat: a.lat + f * (b.lat - a.lat), lon: a.lon + f * (b.lon - a.lon) }), r: coneRadiusKm(h) });
+      c.push({ xy: toXY({ lat: a.lat + f * (b.lat - a.lat), lon: a.lon + f * (b.lon - a.lon) }), r: radiusKm(h) });
     }
   }
   const unit = ([x, y]) => { const d = Math.hypot(x, y); return d > 1e-9 ? [x / d, y / d] : null; };
@@ -120,4 +121,39 @@ function coneFeature(cyclone) {
   };
 }
 
-module.exports = { coneRadiusKm, buildConeRing, coneFeature, IMD_CONE_KM };
+/** Piecewise-linear radius through (0, 0) and the given (hour, km) points, held flat after the last one. */
+function radiusFromPoints(points) {
+  const pts = [[0, 0], ...points.filter(([h, r]) => h > 0 && Number.isFinite(r)).sort((a, b) => a[0] - b[0])];
+  return hour => {
+    if (hour <= 0) return 0;
+    for (let i = 1; i < pts.length; i++) {
+      if (hour <= pts[i][0]) {
+        const [h0, r0] = pts[i - 1]; const [h1, r1] = pts[i];
+        return r0 + ((r1 - r0) * (hour - h0)) / (h1 - h0);
+      }
+    }
+    return pts[pts.length - 1][1];
+  };
+}
+
+/**
+ * Cone around the AI consensus forecast, using the consensus's own verified 67% error radius per lead
+ * (forecast_tracks.cone_radius_km, from forecaster/guidance/consensus.py), or null.
+ */
+function consensusConeFeature(cyclone) {
+  const list = (cyclone.forecasts || []).filter(f => f.source === 'AI_CONSENSUS' && f.cone_radius_km != null);
+  if (!list.length) return null;
+  const ring = buildConeRing([
+    { hour: 0, lat: cyclone.current_lat, lon: cyclone.current_lon },
+    ...list.map(f => ({ hour: f.forecast_hour, lat: f.predicted_lat, lon: f.predicted_lon })),
+  ], radiusFromPoints(list.map(f => [Number(f.forecast_hour), Number(f.cone_radius_km)])));
+  if (!ring) return null;
+  return {
+    type: 'Feature',
+    geometry: { type: 'Polygon', coordinates: [ring] },
+    properties: { type: 'forecast_cone', source: 'AI_CONSENSUS', cyclone_id: cyclone.cyclone_id,
+      method: 'AI consensus: 67% of its verified track errors (2023–24)' },
+  };
+}
+
+module.exports = { coneRadiusKm, buildConeRing, coneFeature, consensusConeFeature, radiusFromPoints, IMD_CONE_KM };

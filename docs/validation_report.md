@@ -64,3 +64,29 @@ Storm-centred 6 × 3 h crops + recent motion → correction to persistence. Test
 - **Intensity:** wind error is about the same as persistence (8.5 vs 8.3 kt at 24 h).
 - The full-domain ConvLSTM (`train_multi_horizon.py`) collapsed to a constant prediction on real data and is not used.
 - Official JTWC / IMD forecasts remain more accurate, so `AI_FORECAST_ENABLED` stays `false`.
+
+## AI consensus track and intensity forecast (5 Oct 2026)
+
+Full tables: [`docs/guidance_report.md`](guidance_report.md) (regenerate with `python -m forecaster.guidance.consensus`).
+
+- **Data:** 57 JTWC-numbered North Indian Ocean systems 2018–2026; ECMWF open-data tropical-cyclone tracks
+  (AIFS, IFS HRES, IFS 51-member ensemble, AIFS ensemble; from Jan 2023) and UCAR RAL ATCF a-decks
+  (GFS, GEFS, UKMET, CMC, NAVGEM; 2018 →). Truth: JTWC best track, cases ≥ 25 kt at start and verifying time.
+- **Fitting:** seasons ≤ 2024 only (member set, per-model position shift, fallback weights, cone).
+  **Test:** 2025–26 storms, used once.
+
+| Unseen 2025–26 storms | 24 h | 48 h | 72 h |
+|---|---|---|---|
+| AI consensus track error | **58 km** | **109 km** | **139 km** |
+| IMD official, long-period average 2019–23 (indicative) | 72 km | 112 km | 156 km |
+| Persistence | 153 km | 288 km | 358 km |
+| AI consensus intensity error | 5 kt | 7 kt | 4 kt |
+| Persistence intensity error | 7 kt | 8 kt | 8 kt |
+
+- **Cone** (67% of 2023–24 consensus errors): 63 / 98 / 171 km at 24 / 48 / 72 h; 2025–26 positions inside it:
+  65% / 55% / 86% (target 67%).
+- **Decision:** passes the Task 1.3 check (≤ IMD official average at 48–72 h) → may be shown, labelled
+  "AI consensus (experimental)", next to the official forecast when `AI_FORECAST_ENABLED=true`.
+- **Caveats:** small test sample (29 cases at 48 h, 14 at 72 h); 2025–26 storms were mostly weak, so intensity
+  errors are lower than in 2023–24 (10 / 13 / 16 kt at 24 / 48 / 72 h in 2018–24, against IMD's 7 / 10 / 14 kt);
+  IMD verifies against its own best track.

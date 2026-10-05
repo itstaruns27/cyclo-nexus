@@ -72,10 +72,33 @@ function validateWebhookPayload(body) {
   };
 }
 
+/** AI consensus forecast attached to an existing official system (forecaster/guidance/live.py). */
+const forecastPayloadSchema = z.object({
+  cyclone_id: z.string().min(3).max(64),
+  source: z.enum(['AI_CONSENSUS']),
+  generated_at: z.string().datetime({ offset: true }),
+  init_time: z.string().datetime({ offset: true }),
+  members: z.array(z.string().regex(/^[A-Z0-9-]{2,12}$/)).min(2).max(16),
+  points: z.array(z.object({
+    hour: z.number().int().min(6).max(168),
+    lat: z.number().min(-30).max(50),
+    lon: z.number().min(30).max(130),
+    wind_kt: z.number().min(0).max(200).nullable(),
+    cone_radius_km: z.number().min(0).max(2000).nullable(),
+    verified_error_km: z.number().min(0).max(2000).nullable().optional(),
+  })).min(1).max(40),
+});
+
+function validateForecastPayload(body) {
+  const result = forecastPayloadSchema.safeParse(body);
+  if (result.success) return { success: true, data: result.data };
+  return { success: false, errors: result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) };
+}
+
 function validateHeartbeat(body) {
   const result = heartbeatSchema.safeParse(body);
   if (result.success) return { success: true, data: result.data };
   return { success: false, errors: result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) };
 }
 
-module.exports = { validateWebhookPayload, validateHeartbeat, webhookPayloadSchema, heartbeatSchema, imdCategoryEnum };
+module.exports = { validateWebhookPayload, validateHeartbeat, validateForecastPayload, forecastPayloadSchema, webhookPayloadSchema, heartbeatSchema, imdCategoryEnum };

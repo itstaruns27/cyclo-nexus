@@ -55,7 +55,7 @@ export const STRINGS_V4 = {
       stale: 'Stale', never: 'Never',
     },
     map: {
-      history: 'Observed track', officialTrack: 'Official forecast', cone: 'Forecast cone (IMD track error)', aiTrack: 'AI forecast', watchArea: 'Watch area (±300 km)',
+      history: 'Observed track', officialTrack: 'Official forecast', cone: 'Forecast cone (IMD track error)', aiTrack: 'AI consensus forecast', watchArea: 'Watch area (±300 km)',
       clickHint: 'Click the ocean to check conditions', offline: 'Offline', delayed: 'Delayed',
     },
     footer: {
@@ -116,7 +116,7 @@ export const STRINGS_V4 = {
       stale: 'पुराना', never: 'कभी नहीं',
     },
     map: {
-      history: 'अवलोकित मार्ग', officialTrack: 'आधिकारिक पूर्वानुमान', cone: 'पूर्वानुमान शंकु (IMD मार्ग त्रुटि)', aiTrack: 'AI पूर्वानुमान', watchArea: 'निगरानी क्षेत्र (±300 किमी)',
+      history: 'अवलोकित मार्ग', officialTrack: 'आधिकारिक पूर्वानुमान', cone: 'पूर्वानुमान शंकु (IMD मार्ग त्रुटि)', aiTrack: 'AI सर्वसम्मति पूर्वानुमान', watchArea: 'निगरानी क्षेत्र (±300 किमी)',
       clickHint: 'स्थिति देखने के लिए समुद्र पर क्लिक करें', offline: 'ऑफ़लाइन', delayed: 'विलंबित',
     },
     footer: {

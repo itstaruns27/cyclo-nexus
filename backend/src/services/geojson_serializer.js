@@ -12,7 +12,7 @@
  *   forecast_cone     — IMD cone of uncertainty around the official forecast (services/forecast_cone.js)
  */
 
-const { coneFeature } = require('./forecast_cone');
+const { coneFeature, consensusConeFeature } = require('./forecast_cone');
 
 const lonLat = (lon, lat) => [Number(lon), Number(lat)];
 
@@ -50,6 +50,8 @@ class GeoJSONSerializer {
 
     const cone = coneFeature(c);
     if (cone) features.push(cone);
+    const aiCone = consensusConeFeature(c);
+    if (aiCone) features.push(aiCone);
 
     const bySource = new Map();
     for (const f of c.forecasts || []) {

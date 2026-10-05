@@ -35,7 +35,7 @@ export const STRINGS_STORM = {
       },
       map: {
         title: 'Track', hint: 'Drag the slider or tap a point to see the storm at that time.', at: 'At this time',
-        observed: 'Observed track', officialFc: 'Official forecast', aiFc: 'AI forecast', cone: 'Forecast cone', gale: 'Gale-force wind area (≥ 63 km/h)',
+        observed: 'Observed track', officialFc: 'Official forecast', aiFc: 'AI consensus forecast', cone: 'Forecast cone', gale: 'Gale-force wind area (≥ 63 km/h)',
         landfall: 'Landfall', genesis: 'Formation', radiiMeasured: 'measured', radiiTypical: 'typical for this strength',
       },
       point: { time: 'Time (UTC)', position: 'Position', wind: 'Wind', pressure: 'Pressure', category: 'Category', motion: 'Motion', gale: 'Gale radius', land: 'Distance to land' },
@@ -54,7 +54,8 @@ export const STRINGS_STORM = {
         methodText: 'People living inside each wind zone, from the GHS-POP 2020 population grid (~1 km), using the storm’s measured wind radii (JTWC) where available, otherwise typical radii for its strength. Figures show exposure — people within reach of those winds — not the number harmed. Storm-force exposure is closest to officially reported “people affected” (e.g. Phailin 2013: 1.08 crore vs 1.32 crore reported).',
       },
       fc: {
-        title: 'Forecast', officialSub: 'Official forecast ({src}) — always follow IMD.', aiSub: 'Experimental AI forecast (INSAT-3DS + IMERG) — shown for comparison only.',
+        title: 'Forecast', officialSub: 'Official forecast ({src}) — always follow IMD.', aiSub: 'AI consensus forecast (experimental) — blends ECMWF’s AI model (AIFS), the ECMWF ensemble, GFS and other global models. Always follow IMD.',
+        aiNote: 'Model run {run}. Models: {models}. “Typical error” is its average track error at that time ahead on storms it never saw (2025–26) — close to official accuracy, but this is not a warning.', typErr: 'Typical error',
         hour: 'Time', near: 'Near', wind: 'Wind', cat: 'Category', none: 'No forecast available.',
       },
       advisory: { title: 'Advisory', fishermen: 'Fishermen', public: 'Public', admin: 'Administration', open: 'All alerts' },
@@ -109,7 +110,7 @@ export const STRINGS_STORM = {
       chart: { wind: 'अधिकतम निरंतर हवा (किमी/घंटा)', pressure: 'केंद्रीय दाब (hPa)', hover: 'चार्ट पर कर्सर रखें या टैप करें', landfall: 'तट से टकराव', now: 'अभी', table: 'तालिका के रूप में' },
       map: {
         title: 'मार्ग', hint: 'उस समय तूफ़ान देखने के लिए स्लाइडर खींचें या किसी बिंदु पर टैप करें।', at: 'इस समय',
-        observed: 'अवलोकित मार्ग', officialFc: 'आधिकारिक पूर्वानुमान', aiFc: 'AI पूर्वानुमान', cone: 'पूर्वानुमान शंकु', gale: 'तेज़ हवा क्षेत्र (≥ 63 किमी/घंटा)',
+        observed: 'अवलोकित मार्ग', officialFc: 'आधिकारिक पूर्वानुमान', aiFc: 'AI सर्वसम्मति पूर्वानुमान', cone: 'पूर्वानुमान शंकु', gale: 'तेज़ हवा क्षेत्र (≥ 63 किमी/घंटा)',
         landfall: 'तट से टकराव', genesis: 'उत्पत्ति', radiiMeasured: 'मापा गया', radiiTypical: 'इस तीव्रता के लिए सामान्य',
       },
       point: { time: 'समय (UTC)', position: 'स्थिति', wind: 'हवा', pressure: 'दाब', category: 'श्रेणी', motion: 'गति', gale: 'तेज़ हवा दायरा', land: 'तट से दूरी' },
@@ -128,7 +129,8 @@ export const STRINGS_STORM = {
         methodText: 'हर पवन क्षेत्र में रहने वाले लोग, GHS-POP 2020 जनसंख्या ग्रिड (~1 किमी) से; जहाँ उपलब्ध हो तूफ़ान के मापे गए पवन दायरे (JTWC), अन्यथा उसकी तीव्रता के सामान्य दायरे। ये आँकड़े जोखिम दिखाते हैं — इन हवाओं की पहुँच में लोग — नुकसान झेलने वालों की संख्या नहीं। तूफ़ानी हवा क्षेत्र आधिकारिक “प्रभावित लोगों” के सबसे क़रीब है (जैसे फैलिन 2013: 1.08 करोड़ बनाम 1.32 करोड़ रिपोर्ट)।',
       },
       fc: {
-        title: 'पूर्वानुमान', officialSub: 'आधिकारिक पूर्वानुमान ({src}) — हमेशा IMD का पालन करें।', aiSub: 'प्रयोगात्मक AI पूर्वानुमान (INSAT-3DS + IMERG) — केवल तुलना के लिए।',
+        title: 'पूर्वानुमान', officialSub: 'आधिकारिक पूर्वानुमान ({src}) — हमेशा IMD का पालन करें।', aiSub: 'AI सर्वसम्मति पूर्वानुमान (प्रयोगात्मक) — ECMWF का AI मॉडल (AIFS), ECMWF समूह पूर्वानुमान, GFS और अन्य वैश्विक मॉडलों का मिश्रण। हमेशा IMD का पालन करें।',
+        aiNote: 'मॉडल रन {run}। मॉडल: {models}। “सामान्य त्रुटि” उन तूफ़ानों पर उतने समय आगे की औसत मार्ग त्रुटि है जिन्हें इसने कभी नहीं देखा (2025–26) — आधिकारिक सटीकता के क़रीब, पर यह चेतावनी नहीं है।', typErr: 'सामान्य त्रुटि',
         hour: 'समय', near: 'निकट', wind: 'हवा', cat: 'श्रेणी', none: 'कोई पूर्वानुमान उपलब्ध नहीं।',
       },
       advisory: { title: 'परामर्श', fishermen: 'मछुआरे', public: 'जनता', admin: 'प्रशासन', open: 'सभी अलर्ट' },

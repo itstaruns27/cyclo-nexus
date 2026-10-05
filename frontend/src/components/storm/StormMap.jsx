@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { applyIndiaBoundaries } from '../../utils/indiaBoundaries';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { IMD_COLORS } from '../../types/cyclone';
+import { IMD_COLORS, SOURCE_COLOR } from '../../types/cyclone';
 import { t } from '../../i18n/translations';
 
 /**
@@ -66,14 +66,15 @@ export default function StormMap({ points, forecastGeo, selected, galeArea, onSe
     m.on('load', () => {
       applyIndiaBoundaries(m);
       for (const id of ['cone', 'fc', 'track', 'gale', 'sel']) m.addSource(id, { type: 'geojson', data: EMPTY });
-      m.addLayer({ id: 'cone-fill', type: 'fill', source: 'cone', paint: { 'fill-color': '#f97316', 'fill-opacity': 0.12 } });
-      m.addLayer({ id: 'cone-line', type: 'line', source: 'cone', paint: { 'line-color': '#f97316', 'line-opacity': 0.5, 'line-width': 1 } });
+      m.addLayer({ id: 'cone-fill', type: 'fill', source: 'cone', paint: { 'fill-color': SOURCE_COLOR,
+        'fill-opacity': ['case', ['==', ['get', 'source'], 'AI_CONSENSUS'], 0.08, 0.12] } });
+      m.addLayer({ id: 'cone-line', type: 'line', source: 'cone', paint: { 'line-color': SOURCE_COLOR, 'line-opacity': 0.5, 'line-width': 1 } });
       m.addLayer({ id: 'gale-fill', type: 'fill', source: 'gale', paint: { 'fill-color': '#38bdf8', 'fill-opacity': 0.16 } });
       m.addLayer({ id: 'gale-line', type: 'line', source: 'gale', paint: { 'line-color': '#7dd3fc', 'line-width': 1.5 } });
       m.addLayer({ id: 'fc-line', type: 'line', source: 'fc', layout: { 'line-cap': 'round' },
-        paint: { 'line-color': ['case', ['==', ['get', 'source'], 'AI_SATELLITE'], '#a855f7', '#f97316'], 'line-width': 2.5, 'line-dasharray': [2, 1.5] } });
+        paint: { 'line-color': SOURCE_COLOR, 'line-width': 2.5, 'line-dasharray': [2, 1.5] } });
       m.addLayer({ id: 'fc-pts', type: 'circle', source: 'fc', filter: ['==', ['geometry-type'], 'Point'],
-        paint: { 'circle-radius': 4, 'circle-color': ['case', ['==', ['get', 'source'], 'AI_SATELLITE'], '#a855f7', '#f97316'],
+        paint: { 'circle-radius': 4, 'circle-color': SOURCE_COLOR,
           'circle-stroke-width': 2, 'circle-stroke-color': '#0f172a' } });
       m.addLayer({ id: 'track-seg', type: 'line', source: 'track', filter: ['==', ['get', 'kind'], 'seg'], layout: { 'line-cap': 'round' },
         paint: { 'line-color': ['match', ['get', 'grade'], ...Object.entries(IMD_COLORS).flat(), '#94a3b8'], 'line-width': 3.5 } });

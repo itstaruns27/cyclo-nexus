@@ -99,7 +99,7 @@
  "map.history": "Observed track",
  "map.officialTrack": "Official forecast",
  "map.cone": "Forecast cone (IMD track error)",
- "map.aiTrack": "AI forecast",
+ "map.aiTrack": "AI consensus forecast",
  "map.watchArea": "Watch area (±300 km)",
  "map.clickHint": "Click the ocean to check conditions",
  "map.offline": "Offline",
@@ -437,7 +437,7 @@
  "storm.map.at": "At this time",
  "storm.map.observed": "Observed track",
  "storm.map.officialFc": "Official forecast",
- "storm.map.aiFc": "AI forecast",
+ "storm.map.aiFc": "AI consensus forecast",
  "storm.map.cone": "Forecast cone",
  "storm.map.gale": "Gale-force wind area (≥ 63 km/h)",
  "storm.map.landfall": "Landfall",
@@ -481,7 +481,7 @@
  "storm.impact.methodText": "People living inside each wind zone, from the GHS-POP 2020 population grid (~1 km), using the storm’s measured wind radii (JTWC) where available, otherwise typical radii for its strength. Figures show exposure — people within reach of those winds — not the number harmed. Storm-force exposure is closest to officially reported “people affected” (e.g. Phailin 2013: 1.08 crore vs 1.32 crore reported).",
  "storm.fc.title": "Forecast",
  "storm.fc.officialSub": "Official forecast ({src}) — always follow IMD.",
- "storm.fc.aiSub": "Experimental AI forecast (INSAT-3DS + IMERG) — shown for comparison only.",
+ "storm.fc.aiSub": "AI consensus forecast (experimental) — blends ECMWF’s AI model (AIFS), the ECMWF ensemble, GFS and other global models. Always follow IMD.",
  "storm.fc.hour": "Time",
  "storm.fc.near": "Near",
  "storm.fc.wind": "Wind",
@@ -526,5 +526,7 @@
  "alertsX.prepare": "Get ready",
  "alertsX.prepareText": "Simple steps that keep your family safe.",
  "alertsX.feeds": "For agencies and developers",
- "alertsX.tapToCall": "Tap to call"
+ "alertsX.tapToCall": "Tap to call",
+ "storm.fc.aiNote": "Model run {run}. Models: {models}. “Typical error” is its average track error at that time ahead on storms it never saw (2025–26) — close to official accuracy, but this is not a warning.",
+ "storm.fc.typErr": "Typical error"
 }

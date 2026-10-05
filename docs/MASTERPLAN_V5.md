@@ -25,7 +25,8 @@
 | Live data: INSAT-3DS (MOSDAC), GPM IMERG (GES DISC), JTWC + IBTrACS | ✅ working | live runs; MOSDAC search truncation fixed |
 | Physics detector (DAV + cold cloud + rain + SST + land) | ✅ validated | 8/14 storms, 0/6 false-alarm days (`docs/validation_report.md`) |
 | YOLO-OBB detector, retrained on 1,245 real frames | ✅ trained, not yet combined with the physics detector | held-out 2024–25: 67% found at conf 0.5, 29% at conf 0.7 (48 km median error, 3/55 false alarms) |
-| Storm-centred track model (5-model ensemble) | ✅ trained, **not wired into pipeline** | 48 h: 297 km vs 325 km persistence (−9%) |
+| Storm-centred track model (5-model ensemble) | ❌ retired (beaten by NWP guidance) | 48 h: 297 km vs 325 km persistence (−9%) |
+| **AI consensus track + intensity forecast** (ECMWF AIFS + IFS ENS, GFS …) | ✅ verified, wired live (5 Oct) | unseen 2025–26: 58 / 109 / 139 km at 24 / 48 / 72 h vs IMD 72 / 112 / 156 (`docs/guidance_report.md`) |
 | Full-domain ConvLSTM forecaster | ❌ collapsed to a constant output | replaced by the track model; do not use |
 | Intensity classification from imagery | ❌ not built | design in `docs/intensity_classification_plan.md` |
 | Impact engine (GHS-POP 2020 grid, JTWC quadrant radii, India-view countries) | ✅ | Phailin 1.08 vs 1.32 crore reported |
@@ -43,8 +44,8 @@
 | **Identification**: storms found (≥ D) | Physics detector 57% | YOLO 29–67% | **≥ 70% found, ≤ 5% false-alarm frames, centre error ≤ 60 km** |
 | Early genesis lead time | IMD naming time | not measured | **flag 12–24 h before official Depression** in ≥ 50% of cases |
 | **Classification**: wind error | Dvorak / ADT ≈ 10–15 kt | none | **RMSE ≤ 10–12 kt; exact IMD class ≥ 60%; within one class ≥ 90%** |
-| **Prediction**: track, 24 / 48 / 72 h | Persistence 153 / 325 / 513 km; IMD official ≈ 60–90 km at 24 h | 148 / 297 / 517 km | **AI consensus ≈ official: ≤ 90 / 160 / 250 km** |
-| Prediction: intensity, 24 h | Persistence 8.3 kt | 8.5 kt | **≤ 6–7 kt** |
+| **Prediction**: track, 24 / 48 / 72 h | Persistence 153 / 325 / 513 km; IMD official ≈ 60–90 km at 24 h | ✅ **58 / 109 / 139 km** (AI consensus, unseen 2025–26) | **AI consensus ≈ official: ≤ 90 / 160 / 250 km** |
+| Prediction: intensity, 24 h | Persistence 8.3 kt | ⚠️ 5 kt on weak 2025–26 storms, 10 kt on stronger 2018–24 storms → Phase 2 | **≤ 6–7 kt** |
 | Impact exposure vs reported "affected" | — | within ~×2 | **within ±50% on 6+ documented storms** |
 
 No system reaches 100%. These targets match published research and official services, and every number above gets re-measured and written into `docs/validation_report.md`.
@@ -59,17 +60,17 @@ Work is grouped in phases. Each task lists what it delivers, how it's done, its 
 | # | Task | Acceptance | Owner |
 |---|---|---|---|
 | 0.1 | Open and merge PR `feat/cap-cone-offline-training` → `main` (or install `gh` CLI so the agent can) | merged, CI green | Team |
-| 0.2 | Fix leftovers: "people living in towns" subtitle (all 9 languages), localised compass directions (NNW → regional words) | no English fragments in regional UI | Agent |
-| 0.3 | Commit regenerated data notes: `pop_grid.bin` provenance, `data/static/geo` kept out of git | README data section updated | Agent |
+| 0.2 | ✅ Fix leftovers: "people living in towns" subtitle (all 9 languages), localised compass directions (NNW → regional words) | no English fragments in regional UI | Agent |
+| 0.3 | ✅ Commit regenerated data notes: `pop_grid.bin` provenance, `data/static/geo` kept out of git | README data section updated | Agent |
 
 ### Phase 1 — Prediction to official-level accuracy (4–5 days)
 | # | Task | How | Acceptance | Owner |
 |---|---|---|---|---|
-| 1.1 | **Satellite steering winds** | INSAT-3DS atmospheric motion vectors (MOSDAC) + ASCAT/OSCAT scatterometer winds around each storm, as track-model inputs | track model 48 h error −15% or better vs today | Agent (+ Team: free EUMETSAT/Copernicus Marine account if needed) |
-| 1.2 | **AI weather-model guidance** | Pull ECMWF AIFS open data + GFS every 6 h and extract storm tracks (vortex tracker) | AIFS/GFS track errors reported on 2024–26 storms | Agent (downloads approved) |
-| 1.3 | **Consensus forecaster** | Bias-corrected, error-weighted blend of official + AIFS + GFS + our track model, trained on 2018–2023 | ≤ official error on 2024–26 at 48–72 h, or documented gap | Agent |
-| 1.4 | Wire the track model / consensus into the live pipeline | `inference/serve.py` + `live_pipeline_runner` publish `AI_CONSENSUS` forecasts; forecast cone from its own ensemble spread | live storm page shows the labelled AI forecast | Agent |
-| 1.5 | Turn `AI_FORECAST_ENABLED` on only if 1.3 passes | feature flag + validation report entry | report states pass/fail | Agent |
+| 1.1 | ⏭️ *Superseded:* the NWP models in 1.2 already assimilate AMVs and scatterometer winds; the consensus beat this target directly. **Satellite steering winds** | INSAT-3DS atmospheric motion vectors (MOSDAC) + ASCAT/OSCAT scatterometer winds around each storm, as track-model inputs | track model 48 h error −15% or better vs today | Agent (+ Team: free EUMETSAT/Copernicus Marine account if needed) |
+| 1.2 | ✅ **AI weather-model guidance** (ECMWF track BUFR + RAL a-decks, no own tracker needed) | Pull ECMWF AIFS open data + GFS every 6 h and extract storm tracks (vortex tracker) | AIFS/GFS track errors reported on 2024–26 storms | Agent (downloads approved) |
+| 1.3 | ✅ PASS **Consensus forecaster** | Bias-corrected, error-weighted blend of official + AIFS + GFS + our track model, trained on 2018–2023 | ≤ official error on 2024–26 at 48–72 h, or documented gap | Agent |
+| 1.4 | ✅ Wire the track model / consensus into the live pipeline (`forecaster/guidance/live.py`, `/webhook/forecast`, storm page + maps) | `inference/serve.py` + `live_pipeline_runner` publish `AI_CONSENSUS` forecasts; forecast cone from its own ensemble spread | live storm page shows the labelled AI forecast | Agent |
+| 1.5 | ✅ (passed; set `AI_FORECAST_ENABLED=true` on the pipeline server at deployment) Turn `AI_FORECAST_ENABLED` on only if 1.3 passes | feature flag + validation report entry | report states pass/fail | Agent |
 
 ### Phase 2 — Classification (IMD 7 classes) (3 days)
 | # | Task | How | Acceptance | Owner |

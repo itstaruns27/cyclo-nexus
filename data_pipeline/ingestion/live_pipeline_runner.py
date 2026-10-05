@@ -14,9 +14,12 @@ Every cycle:
           for organised systems away from official ones; candidates over warm ocean
           (Open-Meteo marine SST ≥ 26.5 °C) are published as satellite *watch areas*.
   4. The window is also sent to the FastAPI inference service (uint8 transport, Task 4.1).
-     YOLO detections are used only as extra candidates (same SST/ocean test); the forecaster
-     track is attached only when AI_FORECAST_ENABLED=true (not validated on real data yet).
-  5. A signed heartbeat reports the run (drives /api/v1/health freshness).
+     YOLO detections are used only as extra candidates (same SST/ocean test). The old full-domain
+     forecaster output is no longer attached (it failed validation — docs/track_model_report.md).
+  5. AI consensus track forecast (master plan v5, Task 1.4): forecaster/guidance/live.py blends
+     ECMWF AIFS / IFS ensemble / GFS … for every official system; published only when
+     AI_FORECAST_ENABLED=true and forecaster/weights/consensus.json passed its verification.
+  6. A signed heartbeat reports the run (drives /api/v1/health freshness).
 All webhooks are gzip + HMAC-SHA256 over "<timestamp>.<body>".
 
 Usage:
@@ -59,7 +62,6 @@ SEQ_LEN = 6
 STEP_HOURS = 3
 STEP_TOLERANCE = timedelta(minutes=45)
 MAX_GPM_LAG = timedelta(hours=1)
-FORECAST_HORIZONS = [6, 12, 24, 48, 72]
 FRAME_DIR = Path(__file__).resolve().parents[2] / "data" / "live" / "frames"
 KEEP_FRAMES = 24
 
@@ -266,21 +268,6 @@ def run_inference(window_tensor: np.ndarray, obs_time: datetime) -> dict:
     return resp.json()
 
 
-def forecast_points(result: dict, lat: float, lon: float) -> list:
-    """Forecaster output → absolute points, or [] when disabled / non-finite."""
-    if not AI_FORECAST_ENABLED or not result:
-        return []
-    pts = []
-    for i, h in enumerate(FORECAST_HORIZONS):
-        d_lat, d_lon = (float(x) for x in result["track_delta"][i])
-        wind, dp = float(result["v_max_pred"][i]), float(result["dp_pred"][i])
-        if not all(math.isfinite(x) for x in (d_lat, d_lon, wind, dp)):
-            log("WARNING: forecaster returned non-finite values; AI forecast skipped")
-            return []
-        pts.append({"hour": h, "lat": lat + d_lat, "lon": lon + d_lon, "wind_kt": wind, "pressure_hpa": 1010.0 - dp})
-    return pts
-
-
 # ── Main cycle ─────────────────────────────────────────────────────
 
 def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
@@ -361,7 +348,7 @@ def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
             s["cyclone_id"], lat, lon, obs_time, {
                 "detection_confidence": 1.0, "method": "insat_imerg_350km",
                 "min_cloud_top_k": m["min_cloud_top_k"], "max_rain_mmhr": m["max_rain_mmhr"], "analysis": m,
-            }, link_cyclone_id=s["cyclone_id"], forecast=forecast_points(result, lat, lon)))
+            }, link_cyclone_id=s["cyclone_id"]))
 
     # 3b. Watch areas: away from official systems, over warm ocean
     fresh = [(c, method) for c, method in candidates if all(
@@ -390,7 +377,7 @@ def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
             "detection_confidence": round(float(c.score), 3), "method": method, "sst_c": sst,
             "min_cloud_top_k": d.get("min_cloud_top_k"), "max_rain_mmhr": d.get("max_rain_mmhr"),
             "summary": summary_text, "candidate": d,
-        }, status="watch", forecast=forecast_points(result, c.lat, c.lon)))
+        }, status="watch"))
 
     status = "ok" if not summary["warnings"] else "degraded"
     message = (f"{len(official)} official system(s) analysed, "
@@ -411,6 +398,13 @@ def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
             status = "degraded"
             summary["warnings"].append(f"webhook {p['metadata']['cyclone_id']}: {exc}")
             log(f"WARNING: {exc}")
+    if AI_FORECAST_ENABLED:
+        try:
+            from forecaster.guidance.live import publish as publish_consensus
+            summary["consensus"] = [f["cyclone_id"] for f in publish_consensus(systems=systems, post=post_signed)]
+        except Exception as exc:  # the consensus never blocks the satellite cycle
+            summary["warnings"].append(f"consensus: {exc}")
+            log(f"WARNING: consensus forecast failed ({exc})")
     send_heartbeat(status, message + (f"; warnings: {'; '.join(summary['warnings'])}" if summary["warnings"] else ""),
                    obs_time, {"frames": summary["frames"], "gpm_lag_hours": summary["gpm_lag_hours"],
                               "published": summary["published"]})

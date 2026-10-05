@@ -33,8 +33,10 @@ const TRACK = [
 // [hour, lat, lon, wind_kt] — landfall near Puri around +30 h
 const FORECAST = {
   OFFICIAL_JTWC: [[12, 18.5, 86.9, 85], [24, 19.3, 86.3, 90], [36, 20.1, 85.7, 65], [48, 21.0, 85.2, 40], [72, 22.4, 84.5, 25]],
-  AI_SATELLITE: [[12, 18.6, 86.8, 82], [24, 19.5, 86.1, 88], [36, 20.3, 85.5, 60], [48, 21.2, 85.0, 38], [72, 22.6, 84.3, 24]],
+  AI_CONSENSUS: [[12, 18.6, 86.8, 82], [24, 19.5, 86.1, 88], [36, 20.3, 85.5, 60], [48, 21.2, 85.0, 38], [72, 22.6, 84.3, 24]],
 };
+// AI consensus extras per lead: [cone radius km, verified typical error km] (forecaster/weights/consensus.json)
+const CONSENSUS_EXTRA = { 12: [42, 53], 24: [63, 58], 36: [82, 73], 48: [98, 109], 72: [171, 139] };
 
 async function stop() {
   for (const table of ['forecast_tracks', 'historical_tracks', 'cyclones']) {
@@ -68,9 +70,11 @@ async function start() {
     for (const [h, la, lo, w] of list) {
       await pool.query(
         `INSERT INTO forecast_tracks (cyclone_id, forecast_hour, predicted_lat, predicted_lon, predicted_wind_kmh,
-           predicted_pressure_hpa, predicted_imd_category, confidence, generated_at, source)
-         VALUES ('DEMO-ARNAB', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [h, la, lo, w * KT, pressureFor(w), getIMDCategory(w * KT), source === 'AI_SATELLITE' ? 0.7 : 1.0, new Date(now), source]);
+           predicted_pressure_hpa, predicted_imd_category, confidence, generated_at, source,
+           cone_radius_km, verified_error_km, init_time, members)
+         VALUES ('DEMO-ARNAB', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [h, la, lo, w * KT, pressureFor(w), getIMDCategory(w * KT), source === 'AI_CONSENSUS' ? 0 : 1.0, new Date(now), source,
+          ...(source === 'AI_CONSENSUS' ? [...CONSENSUS_EXTRA[h], new Date(now - 6 * H), 'AIFS,IFS-ENSM,IFS,GFS,UKM'] : [null, null, null, null])]);
     }
   }
 

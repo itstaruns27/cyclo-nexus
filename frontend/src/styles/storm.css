@@ -80,7 +80,7 @@
 .map-key i { width: 20px; height: 4px; border-radius: 2px; }
 .k-track { background: linear-gradient(90deg, #60a5fa, #fbbf24, #f87171, #c084fc); }
 .k-fc { background: repeating-linear-gradient(90deg, #f97316 0 6px, transparent 6px 10px); }
-.k-ai { background: repeating-linear-gradient(90deg, #a855f7 0 6px, transparent 6px 10px); }
+.k-ai { background: repeating-linear-gradient(90deg, #2dd4bf 0 6px, transparent 6px 10px); }
 .map-key i.k-cone { height: 12px; background: rgba(249, 115, 22, 0.3); border: 1px solid #f97316; }
 .map-key i.k-gale { height: 12px; background: rgba(56, 189, 248, 0.25); border: 1px solid #7dd3fc; }
 .storm-mk { display: inline-flex; align-items: center; gap: 6px; pointer-events: none; }
@@ -183,7 +183,8 @@
 .as-grid svg { color: var(--alert); }
 .fc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .fc-card { padding: 6px 8px; }
-.fc-card.ai { border-style: dashed; }
+.fc-card.ai { border-style: dashed; border-color: color-mix(in srgb, #2dd4bf 55%, transparent); }
+.fc-note { margin: 8px 2px 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
 .clean-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .clean-table th { text-align: left; font-weight: 600; color: var(--muted); font-size: 0.78rem; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .clean-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }

@@ -79,6 +79,13 @@ export const SOURCE_LABELS = {
   OFFICIAL_JTWC: 'JTWC warning',
   OFFICIAL_IBTRACS: 'IBTrACS best track',
   AI_SATELLITE: 'Satellite watch (experimental)',
+  AI_CONSENSUS: 'AI consensus forecast',
 };
+
+/** Map colour of the AI consensus forecast (track, points and cone) — official forecasts stay orange. */
+export const CONSENSUS_COLOR = '#2dd4bf';
+
+/** MapLibre expression: forecast colour by source (satellite watch purple, consensus teal, official orange). */
+export const SOURCE_COLOR = ['match', ['get', 'source'], 'AI_SATELLITE', '#a855f7', 'AI_CONSENSUS', CONSENSUS_COLOR, '#f97316'];
 
 export const ALERT_COLORS = { RED: '#ef4444', ORANGE: '#f97316', YELLOW: '#eab308' };

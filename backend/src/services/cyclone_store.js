@@ -110,6 +110,37 @@ class CycloneStore {
     }
   }
 
+  /**
+   * Replace the AI consensus forecast of an official system. Official rows are never modified;
+   * returns false when the system is unknown or not official (the forecast is then dropped).
+   */
+  async replaceConsensusForecast(f) {
+    const [rows] = await pool.query('SELECT source FROM cyclones WHERE cyclone_id = ?', [f.cyclone_id]);
+    if (!rows.length || !String(rows[0].source).startsWith('OFFICIAL_')) return false;
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query('DELETE FROM forecast_tracks WHERE cyclone_id = ? AND source = ?', [f.cyclone_id, f.source]);
+      for (const p of f.points) {
+        const kmh = p.wind_kt == null ? 0 : p.wind_kt * 1.852;
+        await conn.query(
+          `INSERT INTO forecast_tracks (cyclone_id, forecast_hour, predicted_lat, predicted_lon, predicted_wind_kmh,
+             predicted_pressure_hpa, predicted_imd_category, confidence, generated_at, source, cone_radius_km, verified_error_km, init_time, members)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+          [f.cyclone_id, p.hour, p.lat, p.lon, kmh, 0, getIMDCategory(kmh), new Date(f.generated_at), f.source,
+            p.cone_radius_km, p.verified_error_km ?? null, new Date(f.init_time), f.members.join(',')]
+        );
+      }
+      await conn.commit();
+      return true;
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  }
+
   async getById(cycloneId) {
     const [cyclones] = await pool.query('SELECT * FROM cyclones WHERE cyclone_id = ?', [cycloneId]);
     if (!cyclones.length) return null;

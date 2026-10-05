@@ -40,7 +40,7 @@ backend/dist/
 *.pth
 *.onnx
 *.torchscript
-weights/
+**/weights/*
 runs/
 wandb/
 
@@ -110,3 +110,5 @@ docs/ppt/assets/gen/
 /docs/pre_training_audit_analysis.md
 /docs/detailed_documentation.md
 /fixtures/mock_gemini_bulletin.json
+data/guidance/
+!forecaster/weights/consensus.json

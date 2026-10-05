@@ -4,7 +4,7 @@ import { applyIndiaBoundaries } from '../utils/indiaBoundaries';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { t } from '../i18n/translations';
 import { useData } from '../context/DataContext';
-import { isOfficial, isWatch, IMD_COLORS } from '../types/cyclone';
+import { isOfficial, isWatch, IMD_COLORS, CONSENSUS_COLOR } from '../types/cyclone';
 import WindParticleCanvas from './WindParticleCanvas';
 import WeatherInspector from './WeatherInspector';
 import CycloneChancePanel from './site/CycloneChancePanel';
@@ -156,15 +156,20 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
       m.addLayer({ id: 'watch-area-line', type: 'line', source: 'systems', filter: ['==', ['get', 'kind'], 'watch_area'],
         paint: { 'line-color': '#a855f7', 'line-width': 1.5, 'line-dasharray': [2, 2] } });
       m.addLayer({ id: 'forecast-cone', type: 'fill', source: 'tracks', filter: ['==', ['get', 'type'], 'forecast_cone'],
-        paint: { 'fill-color': '#f97316', 'fill-opacity': 0.13 } });
+        paint: { 'fill-color': ['case', ['==', ['get', 'source'], 'AI_CONSENSUS'], CONSENSUS_COLOR, '#f97316'],
+          'fill-opacity': ['case', ['==', ['get', 'source'], 'AI_CONSENSUS'], 0.08, 0.13] } });
       m.addLayer({ id: 'forecast-cone-line', type: 'line', source: 'tracks', filter: ['==', ['get', 'type'], 'forecast_cone'],
-        paint: { 'line-color': '#f97316', 'line-width': 1, 'line-opacity': 0.55 } });
+        paint: { 'line-color': ['case', ['==', ['get', 'source'], 'AI_CONSENSUS'], CONSENSUS_COLOR, '#f97316'], 'line-width': 1, 'line-opacity': 0.55 } });
       m.addLayer({ id: 'history-line', type: 'line', source: 'tracks', filter: ['==', ['get', 'type'], 'history_track'],
         paint: { 'line-color': '#cbd5e1', 'line-width': 2 } });
       m.addLayer({ id: 'official-track', type: 'line', source: 'tracks',
-        filter: ['all', ['==', ['get', 'type'], 'forecast_track'], ['!=', ['get', 'source'], 'AI_SATELLITE']],
+        filter: ['all', ['==', ['get', 'type'], 'forecast_track'], ['!', ['in', ['get', 'source'], ['literal', ['AI_SATELLITE', 'AI_CONSENSUS']]]]],
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: { 'line-color': '#f97316', 'line-width': 3, 'line-dasharray': [3, 2] } });
+      m.addLayer({ id: 'consensus-track', type: 'line', source: 'tracks',
+        filter: ['all', ['==', ['get', 'type'], 'forecast_track'], ['==', ['get', 'source'], 'AI_CONSENSUS']],
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': CONSENSUS_COLOR, 'line-width': 2.5, 'line-dasharray': [1.5, 1.5] } });
       m.addLayer({ id: 'ai-track', type: 'line', source: 'tracks',
         filter: ['all', ['==', ['get', 'type'], 'forecast_track'], ['==', ['get', 'source'], 'AI_SATELLITE']],
         paint: { 'line-color': '#a855f7', 'line-width': 2, 'line-dasharray': [1, 2] } });
@@ -267,7 +272,7 @@ export default function CycloneMap({ forecastGeoJSON, systems, selected, tabs = 
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#cbd5e1' }} /><span>{t(lang, 'map.history')}</span></div>
           <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#f97316' }} /><span>{t(lang, 'map.officialTrack')}</span></div>
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#f97316', opacity: 0.35, borderRadius: 2 }} /><span>{t(lang, 'map.cone')}</span></div>
-          <div className="map-legend-item"><div className="map-legend-line" style={{ background: '#a855f7' }} /><span>{t(lang, 'map.aiTrack')}</span></div>
+          <div className="map-legend-item"><div className="map-legend-line" style={{ background: CONSENSUS_COLOR }} /><span>{t(lang, 'map.aiTrack')}</span></div>
           <div className="map-legend-item"><div className="map-legend-dot" style={{ background: '#a855f7', opacity: 0.6 }} /><span>{t(lang, 'map.watchArea')}</span></div>
           <div className="map-legend-hint">{t(lang, 'map.clickHint')}</div>
         </div>}

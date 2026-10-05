@@ -78,3 +78,43 @@ describe('cone feature', () => {
     expect(f.properties).toMatchObject({ type: 'forecast_cone', source: 'OFFICIAL_JTWC', cyclone_id: 'X' });
   });
 });
+
+describe('AI consensus cone and forecast payload', () => {
+  const { consensusConeFeature, radiusFromPoints } = require('../src/services/forecast_cone');
+  const { validateForecastPayload } = require('../src/utils/validators');
+
+  it('interpolates the verified radii and holds the last one', () => {
+    const r = radiusFromPoints([[24, 60], [12, 40], [48, 100]]);
+    expect(r(0)).toBe(0);
+    expect(r(6)).toBeCloseTo(20);
+    expect(r(36)).toBeCloseTo(80);
+    expect(r(72)).toBe(100);
+  });
+
+  it('builds a teal-source cone only from AI_CONSENSUS rows with radii', () => {
+    const cyclone = {
+      cyclone_id: 'JTWC-03B-2025', current_lat: 13.5, current_lon: 83.6,
+      forecasts: [
+        { source: 'OFFICIAL_JTWC', forecast_hour: 24, predicted_lat: 16, predicted_lon: 82 },
+        { source: 'AI_CONSENSUS', forecast_hour: 12, predicted_lat: 14.4, predicted_lon: 83.2, cone_radius_km: 42 },
+        { source: 'AI_CONSENSUS', forecast_hour: 24, predicted_lat: 15.9, predicted_lon: 82.7, cone_radius_km: 63 },
+      ],
+    };
+    const f = consensusConeFeature(cyclone);
+    expect(f.properties.source).toBe('AI_CONSENSUS');
+    const lats = f.geometry.coordinates[0].map(p => p[1]);
+    expect(Math.max(...lats)).toBeGreaterThan(15.9 + 0.4);       // final 63 km circle reaches past the 24 h point
+    expect(consensusConeFeature({ ...cyclone, forecasts: cyclone.forecasts.slice(0, 1) })).toBeNull();
+  });
+
+  it('accepts a well-formed consensus payload and rejects other sources', () => {
+    const ok = {
+      cyclone_id: 'JTWC-03B-2025', source: 'AI_CONSENSUS', generated_at: '2025-10-27T14:00:00Z', init_time: '2025-10-27T12:00:00Z',
+      members: ['AIFS', 'IFS-ENSM', 'GFS'],
+      points: [{ hour: 12, lat: 14.4, lon: 83.2, wind_kt: 48.5, cone_radius_km: 42, verified_error_km: 53 }],
+    };
+    expect(validateForecastPayload(ok).success).toBe(true);
+    expect(validateForecastPayload({ ...ok, source: 'OFFICIAL_JTWC' }).success).toBe(false);
+    expect(validateForecastPayload({ ...ok, members: ['AIFS'] }).success).toBe(false);
+  });
+});

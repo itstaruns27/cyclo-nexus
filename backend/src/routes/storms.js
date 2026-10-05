@@ -186,6 +186,11 @@ async function activeProfile(id, lang) {
       hour: f.forecast_hour, lat: Number(f.predicted_lat), lon: Number(f.predicted_lon),
       wind_kmh: Number(f.predicted_wind_kmh), pressure_hpa: f.predicted_pressure_hpa == null ? null : Number(f.predicted_pressure_hpa),
       grade: f.predicted_imd_category, place: impact.placeLabel(Number(f.predicted_lat), Number(f.predicted_lon)),
+      ...(f.source === 'AI_CONSENSUS' ? {
+        cone_radius_km: f.cone_radius_km == null ? null : Number(f.cone_radius_km),
+        verified_error_km: f.verified_error_km == null ? null : Number(f.verified_error_km),
+        init_time: f.init_time, members: f.members ? String(f.members).split(',') : [],
+      } : {}),
     });
   }
   for (const list of Object.values(bySource)) list.sort((a, b) => a.hour - b.hour);
