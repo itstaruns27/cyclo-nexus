@@ -1,0 +1,83 @@
+{
+ "trained": "2026-10-05T13:17Z",
+ "features": [
+  "v0",
+  "dv_past12",
+  "abs_lat",
+  "arabian_sea",
+  "month_sin",
+  "month_cos",
+  "land_frac",
+  "land_at_lead",
+  "hours_to_land",
+  "on_land_now",
+  "dv_AIFS",
+  "dv_GFS",
+  "dv_IFS",
+  "dv_IFS-ENSM",
+  "dv_AIFS-ENSM",
+  "dv_HWRF",
+  "dv_CTCX",
+  "dv_COTC",
+  "dv_UKM",
+  "dv_CMC",
+  "dv_AEMN",
+  "dv_ecmwf_mean",
+  "dv_all_mean",
+  "rule"
+ ],
+ "leads": [
+  12,
+  24,
+  36,
+  48,
+  72
+ ],
+ "train_seasons": "<= 2024",
+ "test_seasons": ">= 2025",
+ "results": [
+  {
+   "lead": 12,
+   "test_mae": 5.117865380700267,
+   "rule_mae": 5.03032786885246,
+   "cv_mae": 7.726197990422411,
+   "cv_rule_mae": 10.411703284258733
+  },
+  {
+   "lead": 24,
+   "test_mae": 4.452215696864619,
+   "rule_mae": 5.4438775510204085,
+   "cv_mae": 11.80659896856203,
+   "cv_rule_mae": 16.686994324976727
+  },
+  {
+   "lead": 36,
+   "test_mae": 5.337528067430791,
+   "rule_mae": 6.218918918918919,
+   "cv_mae": 15.926008703047861,
+   "cv_rule_mae": 21.773442816744836
+  },
+  {
+   "lead": 48,
+   "test_mae": 7.02259765670066,
+   "rule_mae": 7.1931034482758625,
+   "cv_mae": 18.147053741629787,
+   "cv_rule_mae": 25.88921927280941
+  },
+  {
+   "lead": 72,
+   "test_mae": 4.7770236059807525,
+   "rule_mae": 4.632142857142857,
+   "cv_mae": 22.971638560508914,
+   "cv_rule_mae": 33.28190264105642
+  }
+ ],
+ "ri": {
+  "threshold_kt_24h": 30,
+  "cv_auc": 0.8404586226851852,
+  "cv_brier": 0.09228344362207233,
+  "cv_brier_climatology": 0.11238293444328823,
+  "base_rate": 0.12903225806451613
+ },
+ "use_model": true
+}

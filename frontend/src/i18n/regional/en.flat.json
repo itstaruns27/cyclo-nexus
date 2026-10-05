@@ -528,5 +528,7 @@
  "alertsX.feeds": "For agencies and developers",
  "alertsX.tapToCall": "Tap to call",
  "storm.fc.aiNote": "Model run {run}. Models: {models}. “Typical error” is its average track error at that time ahead on storms it never saw (2025–26) — close to official accuracy, but this is not a warning.",
- "storm.fc.typErr": "Typical error"
+ "storm.fc.typErr": "Typical error",
+ "storm.fc.ri": "Chance of rapid strengthening in the next 24 hours (by 56 km/h or more): {p}%",
+ "storm.fc.riNote": "The usual chance is about 13%. In past seasons, when this showed 50% or more, rapid strengthening happened about 6 times in 10."
 }

@@ -71,10 +71,10 @@ async function start() {
       await pool.query(
         `INSERT INTO forecast_tracks (cyclone_id, forecast_hour, predicted_lat, predicted_lon, predicted_wind_kmh,
            predicted_pressure_hpa, predicted_imd_category, confidence, generated_at, source,
-           cone_radius_km, verified_error_km, init_time, members)
-         VALUES ('DEMO-ARNAB', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           cone_radius_km, verified_error_km, init_time, members, ri_probability)
+         VALUES ('DEMO-ARNAB', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [h, la, lo, w * KT, pressureFor(w), getIMDCategory(w * KT), source === 'AI_CONSENSUS' ? 0 : 1.0, new Date(now), source,
-          ...(source === 'AI_CONSENSUS' ? [...CONSENSUS_EXTRA[h], new Date(now - 6 * H), 'AIFS,IFS-ENSM,IFS,GFS,UKM'] : [null, null, null, null])]);
+          ...(source === 'AI_CONSENSUS' ? [...CONSENSUS_EXTRA[h], new Date(now - 6 * H), 'AIFS,IFS-ENSM,IFS,GFS,UKM', 0.12] : [null, null, null, null, null])]);
     }
   }
 

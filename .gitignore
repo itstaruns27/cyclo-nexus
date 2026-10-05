@@ -112,3 +112,7 @@ docs/ppt/assets/gen/
 /fixtures/mock_gemini_bulletin.json
 data/guidance/
 !forecaster/weights/consensus.json
+!forecaster/weights/intensity_fc.json
+!forecaster/weights/intensity_fc_*.txt
+!forecaster/weights/ri_24.txt
+data/hursat/

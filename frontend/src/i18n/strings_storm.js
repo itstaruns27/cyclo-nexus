@@ -56,6 +56,7 @@ export const STRINGS_STORM = {
       fc: {
         title: 'Forecast', officialSub: 'Official forecast ({src}) — always follow IMD.', aiSub: 'AI consensus forecast (experimental) — blends ECMWF’s AI model (AIFS), the ECMWF ensemble, GFS and other global models. Always follow IMD.',
         aiNote: 'Model run {run}. Models: {models}. “Typical error” is its average track error at that time ahead on storms it never saw (2025–26) — close to official accuracy, but this is not a warning.', typErr: 'Typical error',
+        ri: 'Chance of rapid strengthening in the next 24 hours (by 56 km/h or more): {p}%', riNote: 'The usual chance is about 13%. In past seasons, when this showed 50% or more, rapid strengthening happened about 6 times in 10.',
         hour: 'Time', near: 'Near', wind: 'Wind', cat: 'Category', none: 'No forecast available.',
       },
       advisory: { title: 'Advisory', fishermen: 'Fishermen', public: 'Public', admin: 'Administration', open: 'All alerts' },
@@ -131,6 +132,7 @@ export const STRINGS_STORM = {
       fc: {
         title: 'पूर्वानुमान', officialSub: 'आधिकारिक पूर्वानुमान ({src}) — हमेशा IMD का पालन करें।', aiSub: 'AI सर्वसम्मति पूर्वानुमान (प्रयोगात्मक) — ECMWF का AI मॉडल (AIFS), ECMWF समूह पूर्वानुमान, GFS और अन्य वैश्विक मॉडलों का मिश्रण। हमेशा IMD का पालन करें।',
         aiNote: 'मॉडल रन {run}। मॉडल: {models}। “सामान्य त्रुटि” उन तूफ़ानों पर उतने समय आगे की औसत मार्ग त्रुटि है जिन्हें इसने कभी नहीं देखा (2025–26) — आधिकारिक सटीकता के क़रीब, पर यह चेतावनी नहीं है।', typErr: 'सामान्य त्रुटि',
+        ri: 'अगले 24 घंटों में तेज़ी से शक्तिशाली होने (56 किमी/घंटा या अधिक) की संभावना: {p}%', riNote: 'सामान्य संभावना लगभग 13% है। पिछले मौसमों में जब यह 50% या अधिक दिखा, तो लगभग 10 में से 6 बार तूफ़ान तेज़ी से शक्तिशाली हुआ।',
         hour: 'समय', near: 'निकट', wind: 'हवा', cat: 'श्रेणी', none: 'कोई पूर्वानुमान उपलब्ध नहीं।',
       },
       advisory: { title: 'परामर्श', fishermen: 'मछुआरे', public: 'जनता', admin: 'प्रशासन', open: 'सभी अलर्ट' },

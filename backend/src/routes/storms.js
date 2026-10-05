@@ -190,6 +190,7 @@ async function activeProfile(id, lang) {
         cone_radius_km: f.cone_radius_km == null ? null : Number(f.cone_radius_km),
         verified_error_km: f.verified_error_km == null ? null : Number(f.verified_error_km),
         init_time: f.init_time, members: f.members ? String(f.members).split(',') : [],
+        ri_probability: f.ri_probability == null ? null : Number(f.ri_probability),
       } : {}),
     });
   }

@@ -29,6 +29,9 @@ sys.path.append(str(ROOT))
 
 from forecaster.guidance import sources as S  # noqa: E402
 from forecaster.guidance.consensus import blend, intensity_at, shifted  # noqa: E402
+from forecaster.guidance.intensity_model import IntensityForecaster  # noqa: E402
+
+INTENSITY = IntensityForecaster.load()
 
 SETTINGS = ROOT / "forecaster" / "weights" / "consensus.json"
 CACHE = ROOT / "data" / "guidance" / "live"
@@ -155,28 +158,44 @@ def forecast_for(system, detail, init, tracks, settings):
     if obs.tzinfo is None:
         obs = obs.replace(tzinfo=timezone.utc)
     lag_h = (obs - init).total_seconds() / 3600
-    points = []
+    cons = {0: start}
     for lead in range(6, MAX_LEAD_H + int(max(lag_h, 0)) + 1, 6):
         prim = {m: mem[m] for m in settings["primary"] if m in mem and lead in mem[m]}
         b = blend(prim, {m: {str(lead): 1.0} for m in prim}, lead) if len(prim) >= 2 else blend(mem, settings["weights"], lead)
+        if b is not None:
+            cons[lead] = b
+    # Intensity: statistical-dynamical model (Task 2.2) when approved, else the Phase-1 rule
+    carq = ad.get("CARQ", {}).get(0)
+    v0 = carq[2] if carq and carq[2] == carq[2] else start[2]
+    prev = position_at(detail, init - timedelta(hours=12))
+    dv_past = (start[2] - prev[2]) if prev and prev[2] == prev[2] and start[2] == start[2] else np.nan
+    ri = None
+    fc_int = INTENSITY.predict(v0, dv_past, start[0], start[1], init.month, cons, models) if INTENSITY and v0 == v0 else None
+    if fc_int:
+        fc_int, ri = fc_int
+    cone = settings["cone_km"]
+    keys = sorted(int(k) for k in cone)
+    verified = settings.get("test_mean_km", {})
+    vk = sorted(int(k) for k in verified)
+    points = []
+    for lead in sorted(k for k in cons if k > 0):
         hour = int(round(lead - lag_h))
-        if b is None or hour < 6 or hour > MAX_LEAD_H:
+        if hour < 6 or hour > MAX_LEAD_H:
             continue
-        cone = settings["cone_km"]
-        keys = sorted(int(k) for k in cone)
+        la, lo = cons[lead][0], cons[lead][1]
+        v = fc_int.get(lead) if fc_int else intensity_at(mem, lead, start[2])
         radius = float(np.interp(lead, keys, [cone[str(k)] for k in keys])) if keys else None
-        v = intensity_at(mem, lead, start[2])
-        verified = settings.get("test_mean_km", {})
-        vk = sorted(int(k) for k in verified)
         err = float(np.interp(lead, vk, [verified[str(k)] for k in vk])) if vk else None
-        points.append({"hour": hour, "lat": round(b[0], 2), "lon": round(((b[1] + 180) % 360) - 180, 2),
-                       "wind_kt": None if v != v else round(v, 1), "cone_radius_km": None if radius is None else round(radius),
+        points.append({"hour": hour, "lat": round(la, 2), "lon": round(((lo + 180) % 360) - 180, 2),
+                       "wind_kt": None if v is None or v != v else round(v, 1),
+                       "cone_radius_km": None if radius is None else round(radius),
                        "verified_error_km": None if err is None else round(err)})
     if not points:
         return None
     return {"cyclone_id": system["cyclone_id"], "source": "AI_CONSENSUS",
             "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "init_time": init.strftime("%Y-%m-%dT%H:%M:%SZ"), "members": sorted(mem), "points": points}
+            "init_time": init.strftime("%Y-%m-%dT%H:%M:%SZ"), "members": sorted(mem), "points": points,
+            "ri_probability": None if ri is None else round(ri, 3)}
 
 
 def publish(systems=None, post=None, dry_run=False, now=None):

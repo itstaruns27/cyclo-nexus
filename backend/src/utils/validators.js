@@ -87,6 +87,7 @@ const forecastPayloadSchema = z.object({
     cone_radius_km: z.number().min(0).max(2000).nullable(),
     verified_error_km: z.number().min(0).max(2000).nullable().optional(),
   })).min(1).max(40),
+  ri_probability: z.number().min(0).max(1).nullable().optional(),
 });
 
 function validateForecastPayload(body) {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Wind, Gauge, Award, Clock, Route as RouteIcon, MapPin, Zap, Users, AlertOctagon, Building2,
-  HeartCrack, IndianRupee, Download, ChevronDown, Anchor, Landmark, Info, ExternalLink,
+  HeartCrack, IndianRupee, Download, ChevronDown, Anchor, Landmark, Info, ExternalLink, TrendingUp,
 } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { fill } from '../i18n/strings_site';
@@ -385,6 +385,15 @@ export default function StormPage() {
               <div>
                 <h3 className="sub-h">{t(lang, 'storm.fc.aiSub')}</h3>
                 <ForecastTable list={ai} lang={lang} ai />
+                {ai[0]?.ri_probability != null && (
+                  <div className={`ri-chance${ai[0].ri_probability >= 0.4 ? ' high' : ''}`}>
+                    <TrendingUp size={16} />
+                    <div>
+                      <b>{fill(t(lang, 'storm.fc.ri'), { p: Math.round(ai[0].ri_probability * 100) })}</b>
+                      <span>{t(lang, 'storm.fc.riNote')}</span>
+                    </div>
+                  </div>
+                )}
                 <p className="fc-note">{fill(t(lang, 'storm.fc.aiNote'), {
                   run: ai[0]?.init_time ? fmtDT(ai[0].init_time, lang) : '—',
                   models: (ai[0]?.members || []).join(', '),
