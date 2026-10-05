@@ -90,116 +90,163 @@ def metrics(y, p):
 
 
 def fit():
+    """Choose between INSAT-only, INSAT + global pre-trained model, and calibrated global model; validate; save."""
     import lightgbm as lgb
     df = pd.read_csv(FEATS)
     meta_cols = {"sid", "name", "season", "time", "frame", "jitter", "wind_kt", "dist2land_km"}
-    cols = [c for c in df.columns if c not in meta_cols]
-    tr, va, te = df[df.season <= 2022], df[df.season == 2023], df[df.season >= 2024]
-    va0, te0 = va[va.jitter == 0], te[te.jitter == 0]
-    # Inverse-frequency weights per IMD class so rare strong storms are not drowned by depressions
-    def weights(d):
+    base = [c for c in df.columns if c not in meta_cols]
+    glob_info, gcols = None, None
+    if HURSAT_FEATS.exists():
+        gm, gcols, glob_info = fit_global()
+        df["global_ir_kt"] = gm.predict(df[gcols])
+    P = dict(objective="regression", learning_rate=0.03, num_leaves=15, min_child_samples=20, feature_fraction=0.7,
+             bagging_fraction=0.8, bagging_freq=1, lambda_l2=1.0, verbose=-1, seed=0)
+    ROUNDS = 400
+
+    def balanced(d):
         cls = d.wind_kt.map(imd_class)
         freq = cls.value_counts()
         return cls.map(lambda c: len(d) / (len(freq) * freq[c])).clip(upper=6).values
 
-    params = dict(objective="huber", alpha=12.0, learning_rate=0.03, num_leaves=15, min_child_samples=20,
-                  feature_fraction=0.7, bagging_fraction=0.8, bagging_freq=1, lambda_l2=1.0, verbose=-1, seed=0)
-    grid = []
-    for nl in (7, 15, 31):
-        for mcs in (10, 20, 40):
-            for balanced in (False, True):
-                p = {**params, "num_leaves": nl, "min_child_samples": mcs}
-                m = lgb.train(p, lgb.Dataset(tr[cols], tr.wind_kt, weight=weights(tr) if balanced else None),
-                              num_boost_round=3000, valid_sets=[lgb.Dataset(va0[cols], va0.wind_kt)],
-                              callbacks=[lgb.early_stopping(150, verbose=False)])
-                s = metrics(va0.wind_kt, m.predict(va0[cols], num_iteration=m.best_iteration))
-                grid.append((s["rmse"], nl, mcs, balanced, m.best_iteration, s))
-    grid.sort(key=lambda g: g[0])
-    best_rmse, nl, mcs, balanced, iters, vs = grid[0]
-    print(f"best on 2023: leaves {nl}, min child {mcs}, balanced {balanced}, {iters} rounds → RMSE {best_rmse:.1f} kt")
+    def gbm(cols):
+        def f(tr, te):
+            m = lgb.train(P, lgb.Dataset(tr[cols], tr.wind_kt, weight=balanced(tr)), ROUNDS)
+            return m.predict(te[cols])
+        return f
 
-    # Baselines on the test seasons: climatology (train mean per month) and a 3-feature linear fit (Dvorak-like)
-    clim = float(tr.wind_kt.mean())
-    from numpy.linalg import lstsq
-    lin_cols = ["tb_ring_25_50", "eye_contrast", "cold213_100"]
-    A = np.c_[np.ones(len(tr)), tr[lin_cols].fillna(tr[lin_cols].median())]
-    coef, *_ = lstsq(A, tr.wind_kt, rcond=None)
-    lin = lambda d: np.c_[np.ones(len(d)), d[lin_cols].fillna(tr[lin_cols].median())] @ coef  # noqa: E731
+    def linear(cols):
+        def f(tr, te):
+            A = np.c_[np.ones(len(tr)), tr[cols].fillna(tr[cols].median())]
+            coef, *_ = np.linalg.lstsq(A, tr.wind_kt, rcond=None)
+            return np.c_[np.ones(len(te)), te[cols].fillna(tr[cols].median())] @ coef
+        return f
 
-    # Refit on ≤ 2023 with the chosen settings, fixed rounds (×1.1 for the extra season), test once
-    full = df[df.season <= 2023]
-    p = {**params, "num_leaves": nl, "min_child_samples": mcs}
-    final = lgb.train(p, lgb.Dataset(full[cols], full.wind_kt, weight=weights(full) if balanced else None),
-                      num_boost_round=int(iters * 1.1) + 1)
-    pred = final.predict(te0[cols])
-    ts = metrics(te0.wind_kt, pred)
-    tc = metrics(te0.wind_kt, np.full(len(te0), clim))
-    tl = metrics(te0.wind_kt, lin(te0))
-    # Error by class and the 80% error interval (shown as the estimate's ± on the site)
-    resid = pred - te0.wind_kt.values
-    band = float(np.percentile(np.abs(resid), 80))
+    variants = {"INSAT features (LightGBM)": gbm(base),
+                "3-feature linear (Dvorak-like)": linear(["tb_ring_25_50", "eye_contrast", "cold213_100"])}
+    if gcols:
+        variants["INSAT + global pre-trained model (LightGBM)"] = gbm(base + ["global_ir_kt"])
+        variants["Global model, calibrated to IMD (linear)"] = linear(["global_ir_kt"])
+
+    def loso(fn, seasons):
+        """Leave-one-season-out predictions (unjittered images) over `seasons`."""
+        out = []
+        for s in seasons:
+            tr = df[(df.season != s) & df.season.isin(seasons)]
+            te = df[(df.season == s) & (df.jitter == 0)]
+            out.append(pd.DataFrame({"y": te.wind_kt.values, "p": fn(tr, te), "season": s}, index=te.index))
+        return pd.concat(out)
+
+    dev = [s for s in sorted(df.season.unique()) if s <= 2023]
+    cv = {k: loso(fn, dev) for k, fn in variants.items()}
+    cv_m = {k: metrics(v.y, v.p) for k, v in cv.items()}
+    best = min((k for k in variants if "linear" not in k or "Global" in k), key=lambda k: cv_m[k]["rmse"])
+    print("selection (LOSO 2018–23):", {k: round(v["rmse"], 1) for k, v in cv_m.items()}, "→", best)
+
+    tr, te0 = df[df.season <= 2023], df[(df.season >= 2024) & (df.jitter == 0)]
+    test = {k: metrics(te0.wind_kt, fn(tr, te0)) for k, fn in variants.items()}
+    allcv = loso(variants[best], sorted(df.season.unique()))
+    strong = allcv.y >= 64
+    s_m = metrics(allcv.y[strong], allcv.p[strong])
+    band = float(np.percentile(np.abs(allcv.p - allcv.y), 80))
     by_cls = []
-    for c in CLASSES:
-        m = te0.wind_kt.map(imd_class) == CLASSES.index(c)
+    for i, c in enumerate(CLASSES):
+        m = allcv.y.map(imd_class) == i
         if m.any():
-            r = metrics(te0.wind_kt[m], pred[m.values])
-            by_cls.append(f"| {c} | {r['n']} | {r['mae']:.1f} | {r['bias']:+.1f} | {100 * r['exact']:.0f}% |")
+            r = metrics(allcv.y[m], allcv.p[m])
+            by_cls.append(f"| {c} | {r['n']} | {r['mae']:.1f} | {r['bias']:+.1f} | {100 * r['exact']:.0f}% | {100 * r['within1']:.0f}% |")
     conf = np.zeros((len(CLASSES), len(CLASSES)), int)
-    for y, q in zip(te0.wind_kt, pred):
+    for y, q in zip(allcv.y, allcv.p):
         conf[imd_class(y), imd_class(q)] += 1
 
+    # Final model: chosen variant on every season (deployment)
+    cols = base + (["global_ir_kt"] if "global" in best.lower() and "LightGBM" in best else [])
+    if "linear" in best:
+        cols = ["global_ir_kt"]
+    final = lgb.train(P, lgb.Dataset(df[cols], df.wind_kt, weight=balanced(df)), ROUNDS)
     MODEL.parent.mkdir(parents=True, exist_ok=True)
     final.save_model(str(MODEL))
-    imp = sorted(zip(cols, final.feature_importance("gain")), key=lambda kv: -kv[1])
+    tb = test[best]
+    approved = bool(tb["rmse"] <= 12.0 and cv_m[best]["rmse"] < cv_m["3-feature linear (Dvorak-like)"]["rmse"])
     META.write_text(json.dumps({
-        "features": cols, "trained": datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "train_seasons": "<= 2023",
-        "test_seasons": ">= 2024", "test": ts, "error_band_kt_80": round(band, 1), "params": p,
+        "features": cols, "global_features": gcols if "global_ir_kt" in cols else None, "variant": best,
+        "trained": datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "train_seasons": "all (2018–2025) for deployment",
+        "cv_2018_2023": cv_m[best], "test_2024_25": tb, "loso_all": metrics(allcv.y, allcv.p), "loso_strong": s_m,
+        "error_band_kt_80": round(band, 1), "global": glob_info, "approved": approved,
         "labels": "IMD best-track 3-minute wind (IBTrACS NEWDELHI_WIND)",
     }, indent=1), encoding="utf-8")
 
     pct = lambda v: f"{100 * v:.0f}%"  # noqa: E731
+    row = lambda k, m: f"| {k} | {m['rmse']:.1f} | {m['mae']:.1f} | {m['bias']:+.1f} | {pct(m['exact'])} | {pct(m['within1'])} |"  # noqa: E731
+    head = ["| Method | RMSE (kt) | MAE (kt) | Bias (kt) | Exact IMD class | Within one class |", "|---|---|---|---|---|---|"]
     test_storms = ", ".join(sorted({f"{n.title()} {s}" for n, s in zip(te0.name, te0.season)}))
     lines = [
         "# Satellite intensity estimate — validation",
         "",
         f"Generated {datetime.utcnow():%Y-%m-%d %H:%M} UTC by `python -m forecaster.intensity.train fit`.",
         "",
-        "**What it does:** estimates a storm's maximum sustained wind (IMD 3-minute, knots) and its IMD class from one",
-        "INSAT-3DR/3DS image (plus the image 3–9 h earlier when available) and IMERG rain — like an automated Dvorak analysis.",
+        "Estimates a storm's maximum sustained wind (IMD 3-minute, kt) and IMD class from the current INSAT image, the image",
+        "3–9 h earlier and IMERG rain — an automated Dvorak-style analysis (eye auto-centring, cloud-top rings, cold-cloud cover).",
         "",
-        f"**Data:** {df[df.jitter == 0].shape[0]} storm images from {df.sid.nunique()} storms (2018–2025). Labels: IMD best track.",
-        f"Train ≤ 2022 · choose settings on 2023 · **test 2024–25 ({len(te0)} images, never used before):** {test_storms}.",
+        f"**INSAT data:** {int((df.jitter == 0).sum())} images of {df.sid.nunique()} storms (2018–2025), IMD best-track labels.",
+    ]
+    if glob_info:
+        lines += [f"**Global pre-training:** NOAA HURSAT-B1, {glob_info['storms']} storms worldwide 2004–2015, {glob_info['images']} "
+                  f"images, JTWC/NHC 1-minute winds; on held-out storms RMSE {glob_info['holdout_rmse']:.1f} kt."]
+    lines += [
         "",
-        "## Test seasons 2024–25",
+        "## Model selection — leave-one-season-out, 2018–2023", "", *head, *[row(k, v) for k, v in cv_m.items()], "",
+        f"Chosen: **{best}**.", "",
+        f"## Test seasons 2024–25 (scored once; {len(te0)} images: {test_storms})", "", *head, *[row(k, v) for k, v in test.items()], "",
+        "Note: 2024–25 had no storm above Severe Cyclonic Storm in IMD's best track, so the test is weak-storm heavy.",
         "",
-        "| Method | RMSE (kt) | MAE (kt) | Bias (kt) | Exact IMD class | Within one class |",
-        "|---|---|---|---|---|---|",
-        f"| **Cyclo-Nexus satellite estimate (LightGBM, {len(cols)} features)** | **{ts['rmse']:.1f}** | **{ts['mae']:.1f}** | {ts['bias']:+.1f} | **{pct(ts['exact'])}** | **{pct(ts['within1'])}** |",
-        f"| 3-feature linear (Dvorak-like) | {tl['rmse']:.1f} | {tl['mae']:.1f} | {tl['bias']:+.1f} | {pct(tl['exact'])} | {pct(tl['within1'])} |",
-        f"| Climatology (training mean {clim:.0f} kt) | {tc['rmse']:.1f} | {tc['mae']:.1f} | {tc['bias']:+.1f} | {pct(tc['exact'])} | {pct(tc['within1'])} |",
-        "",
-        f"Published research on geostationary IR: RMSE ≈ 10–16 kt (Pradhan et al. 2018: 10.2 kt; INSAT-3D CNN studies 10–16 kt). "
-        f"Plan target: RMSE ≤ 12 kt, exact class ≥ 60%, within one class ≥ 90%. 80% of test errors are within ±{band:.0f} kt "
-        "(shown on the site as the estimate's range).",
-        "",
-        "## By IMD class (test)",
-        "",
-        "| Class | Images | MAE (kt) | Bias (kt) | Exact class |", "|---|---|---|---|---|", *by_cls,
-        "",
-        "## Confusion matrix (rows = IMD best track, columns = estimate)",
-        "",
+        "## Every season, leave-one-season-out (chosen method) — includes Fani, Amphan, Tauktae, Mocha, Biparjoy",
+        "", *head, row("All storms", metrics(allcv.y, allcv.p)), row("Storms ≥ 64 kt (VSCS+)", s_m), "",
+        "| Class | Images | MAE (kt) | Bias (kt) | Exact | Within one |", "|---|---|---|---|---|---|", *by_cls, "",
+        "Confusion matrix (rows = IMD best track, columns = estimate):", "",
         "| | " + " | ".join(CLASSES) + " |", "|---|" + "---|" * len(CLASSES),
         *[f"| {CLASSES[i]} | " + " | ".join(str(v) for v in conf[i]) + " |" for i in range(len(CLASSES))],
         "",
-        f"## Validation season 2023 (settings chosen here): RMSE {vs['rmse']:.1f} kt, exact {pct(vs['exact'])}, within one {pct(vs['within1'])}",
+        f"80% of errors are within ±{band:.0f} kt — shown on the site as the estimate's range. Published geostationary-IR methods: "
+        "RMSE ≈ 10–16 kt (Pradhan et al. 2018: 10.2 kt with many more storms). Plan target: RMSE ≤ 12 kt on 2024–25.",
         "",
-        "## Most useful features",
-        "",
-        ", ".join(f"`{k}`" for k, _ in imp[:12]),
+        f"**Shown on the site: {'yes' if approved else 'no'}** (needs test RMSE ≤ 12 kt and beating the Dvorak-like baseline).",
         "",
     ]
     REPORT.write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
+
+
+# ─── Global pre-training (HURSAT-B1) + stacking ────────────────────────────
+
+HURSAT_FEATS = ROOT / "data" / "hursat" / "features.csv"
+GLOBAL_MODEL = ROOT / "forecaster" / "weights" / "intensity_global_ir.txt"
+NOT_IR = ("rain_", "d_rain_", "month_", "arabian_sea", "jitter")
+
+
+def ir_cols(cols):
+    return [c for c in cols if not c.startswith(NOT_IR)]
+
+
+def fit_global(rounds=1500):
+    """Infrared-only model on every HURSAT storm worldwide (JTWC/NHC 1-minute wind)."""
+    import lightgbm as lgb
+    h = pd.read_csv(HURSAT_FEATS)
+    cols = ir_cols([c for c in h.columns if c not in ("sid", "time", "wind_kt", "lat")])
+    p = dict(objective="regression", learning_rate=0.03, num_leaves=63, min_child_samples=40, feature_fraction=0.8,
+             bagging_fraction=0.8, bagging_freq=1, lambda_l2=2.0, verbose=-1, seed=0)
+    # hold out 20% of storms to report the global skill honestly
+    sids = np.array(sorted(h.sid.unique()))
+    rng = np.random.default_rng(0)
+    hold = set(rng.choice(sids, size=len(sids) // 5, replace=False))
+    tr, te = h[~h.sid.isin(hold)], h[h.sid.isin(hold)]
+    m = lgb.train(p, lgb.Dataset(tr[cols], tr.wind_kt), rounds)
+    e = m.predict(te[cols]) - te.wind_kt
+    print(f"global IR model: {h.sid.nunique()} storms, {len(h)} images; held-out storms RMSE {np.sqrt((e ** 2).mean()):.1f} kt, "
+          f"MAE {e.abs().mean():.1f}")
+    final = lgb.train(p, lgb.Dataset(h[cols], h.wind_kt), rounds)
+    final.save_model(str(GLOBAL_MODEL))
+    return final, cols, {"storms": int(h.sid.nunique()), "images": int(len(h)),
+                         "holdout_rmse": float(np.sqrt((e ** 2).mean())), "holdout_mae": float(e.abs().mean())}
 
 
 if __name__ == "__main__":

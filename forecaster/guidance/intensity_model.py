@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from forecaster.guidance import consensus as C  # noqa: E402
+from forecaster.guidance.sst import potential_intensity_kt, sst_at  # noqa: E402
 
 WEIGHTS = ROOT / "forecaster" / "weights"
 META = WEIGHTS / "intensity_fc.json"
@@ -35,6 +36,7 @@ REPORT = ROOT / "docs" / "intensity_forecast_report.md"
 LEADS = [12, 24, 36, 48, 72]
 INT_MODELS = ["AIFS", "GFS", "IFS", "IFS-ENSM", "AIFS-ENSM", "HWRF", "CTCX", "COTC", "UKM", "CMC", "AEMN"]
 RI_KT = 30
+USE_SST = False          # see features(): SST / potential-intensity predictors did not improve skill
 PARAMS = dict(objective="regression", learning_rate=0.03, num_leaves=7, min_child_samples=15, feature_fraction=0.8,
               bagging_fraction=0.8, bagging_freq=1, lambda_l2=5.0, verbose=-1, seed=0)
 ROUNDS = 350
@@ -56,8 +58,9 @@ def is_land(lat, lon):
     return grid[r, c] > 0
 
 
-def features(lead, v0, dv_past, lat, lon, month, cons_track, models):
-    """One feature row. cons_track {tau: (lat, lon, …)}; models {name: {tau: (lat, lon, vmax)}}."""
+def features(lead, v0, dv_past, lat, lon, month, cons_track, models, sst=None):
+    """One feature row. cons_track {tau: (lat, lon, …)}; models {name: {tau: (lat, lon, vmax)}};
+    sst(lat, lon) → °C or NaN (OISST in training, Open-Meteo marine live)."""
     taus = [t for t in sorted(cons_track) if 0 < t <= lead]
     land = [is_land(*cons_track[t][:2]) for t in taus]
     first_land = next((t for t, l in zip(taus, land) if l), None)
@@ -80,6 +83,17 @@ def features(lead, v0, dv_past, lat, lon, month, cons_track, models):
     f["dv_ecmwf_mean"] = float(np.mean(ec)) if ec else np.nan
     f["dv_all_mean"] = float(np.mean(al)) if al else np.nan
     f["rule"] = (C.intensity_at(models, lead, v0) - v0) if v0 == v0 else np.nan     # Phase-1 rule, as a predictor
+    # Ocean: SST now and under the forecast positions, and the gap to the potential intensity (SHIPS "MPI").
+    # Tested on 5 Oct 2026 (OISST): no gain over the models' own intensity trend (RI skill fell), so off by default.
+    if sst is None:
+        return f
+    s_now = sst(lat, lon) if sst else np.nan
+    s_track = [sst(*cons_track[t][:2]) for t in taus] if sst else []
+    s_track = [v for v in s_track if v == v]
+    f["sst_now"] = s_now
+    f["sst_track_mean"] = float(np.mean(s_track)) if s_track else np.nan
+    f["mpi_gap_now"] = potential_intensity_kt(s_now) - v0 if v0 == v0 else np.nan
+    f["mpi_gap_track"] = potential_intensity_kt(f["sst_track_mean"]) - v0 if v0 == v0 else np.nan
     return f
 
 
@@ -98,11 +112,13 @@ def build_cases():
         mem = C.member_forecasts(trk, init, atcf, start, settings["members"], settings["alphas"])
         cons = C.consensus(mem, settings["weights"], {}, start)
         models = {m: trk[(m, init, atcf)] for m in INT_MODELS if (m, init, atcf) in trk}
+        day = init.date()
+        sst = lru_cache(maxsize=None)(lambda la, lo: sst_at(day, round(la, 2), round(lo, 2)))
         for lead in LEADS:
             tv = truth.get((atcf, init + pd.Timedelta(hours=lead)))
             if tv is None or not (tv[2] >= C.MIN_TD_KT) or v0 != v0:
                 continue
-            f = features(lead, v0, dv_past, start[0], start[1], init.month, cons, models)
+            f = features(lead, v0, dv_past, start[0], start[1], init.month, cons, models, sst if USE_SST else None)
             rows.append({"atcf": atcf, "season": int(atcf[4:]), "init": init, "lead": lead, "v_true": tv[2],
                          "dv_true": tv[2] - v0, **f})
     return pd.DataFrame(rows)
@@ -196,6 +212,9 @@ def main():
         "",
         "IMD official intensity error, long-period average 2019–23: 7.1 / 10.3 / 13.8 kt at 24 / 48 / 72 h (3-minute wind; indicative).",
         "",
+        "Tested and left out: sea-surface temperature (NOAA OISST) under the track and the gap to potential intensity "
+        "(DeMaria–Kaplan) — leave-one-season-out errors changed by −0.4…+1.1 kt and RI skill fell (AUC 0.84 → 0.80).",
+        "",
         f"## Rapid intensification (≥ {RI_KT} kt in 24 h)",
         "",
         f"Base rate {100 * tr.ri.mean():.1f}% of 24-h cases ({int(tr.ri.sum())} events, 2018–{train_to}). "
@@ -233,13 +252,13 @@ class IntensityForecaster:
         except Exception:  # noqa: BLE001
             return None
 
-    def predict(self, v0, dv_past, lat, lon, month, cons_track, models):
+    def predict(self, v0, dv_past, lat, lon, month, cons_track, models, sst=None):
         """({lead h: wind kt} for every 6-hourly lead up to the last model lead, P(RI in 24 h))."""
         pts = {0: v0}
         for lead, m in self.models.items():
-            f = features(lead, v0, dv_past, lat, lon, month, cons_track, models)
+            f = features(lead, v0, dv_past, lat, lon, month, cons_track, models, sst)
             pts[lead] = max(15.0, v0 + float(m.predict(pd.DataFrame([f])[self.cols])[0]))
-        f24 = features(24, v0, dv_past, lat, lon, month, cons_track, models)
+        f24 = features(24, v0, dv_past, lat, lon, month, cons_track, models, sst)
         ri = float(self.ri.predict(pd.DataFrame([f24])[self.cols])[0])
         keys = sorted(pts)
         out = {h: float(np.interp(h, keys, [pts[k] for k in keys])) for h in range(6, keys[-1] + 1, 6)}

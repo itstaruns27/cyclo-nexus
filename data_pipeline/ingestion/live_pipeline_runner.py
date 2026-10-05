@@ -268,6 +268,34 @@ def run_inference(window_tensor: np.ndarray, obs_time: datetime) -> dict:
     return resp.json()
 
 
+# ── Satellite intensity estimate (master plan v5, Task 2.3) ─────────
+
+_SAT_INTENSITY = []
+
+
+def satellite_intensity(window_tensor, lat, lon, obs_time):
+    """IMD-wind estimate from the last two frames (3 h apart), or None if the model is absent / not approved."""
+    if not _SAT_INTENSITY:
+        try:
+            from forecaster.intensity.estimate import SatelliteIntensity
+            _SAT_INTENSITY.append(SatelliteIntensity.load())
+        except Exception as exc:  # noqa: BLE001
+            log(f"WARNING: satellite intensity model unavailable ({exc})")
+            _SAT_INTENSITY.append(None)
+    est = _SAT_INTENSITY[0]
+    if est is None:
+        return None
+
+    def to_store(frame):        # (4, 1024, 1024) float → (4, 512, 512) uint8, exactly as the training store
+        small = frame.reshape(4, 512, 2, 512, 2).mean(axis=(2, 4))
+        return (np.clip(small, 0, 1) * 255).round().astype(np.uint8)
+    try:
+        return est.estimate(to_store(window_tensor[-1]), lat, lon, to_store(window_tensor[-2]), 3.0, obs_time.month)
+    except Exception as exc:  # noqa: BLE001
+        log(f"WARNING: satellite intensity failed at {lat:.1f}N {lon:.1f}E ({exc})")
+        return None
+
+
 # ── Main cycle ─────────────────────────────────────────────────────
 
 def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
@@ -348,6 +376,7 @@ def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
             s["cyclone_id"], lat, lon, obs_time, {
                 "detection_confidence": 1.0, "method": "insat_imerg_350km",
                 "min_cloud_top_k": m["min_cloud_top_k"], "max_rain_mmhr": m["max_rain_mmhr"], "analysis": m,
+                "satellite_intensity": satellite_intensity(window_tensor, lat, lon, obs_time),
             }, link_cyclone_id=s["cyclone_id"]))
 
     # 3b. Watch areas: away from official systems, over warm ocean
@@ -377,6 +406,7 @@ def run_live_pipeline(at: datetime = None, dry_run: bool = False) -> dict:
             "detection_confidence": round(float(c.score), 3), "method": method, "sst_c": sst,
             "min_cloud_top_k": d.get("min_cloud_top_k"), "max_rain_mmhr": d.get("max_rain_mmhr"),
             "summary": summary_text, "candidate": d,
+            "satellite_intensity": satellite_intensity(window_tensor, c.lat, c.lon, obs_time),
         }, status="watch"))
 
     status = "ok" if not summary["warnings"] else "degraded"

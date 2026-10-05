@@ -32,6 +32,9 @@ class CycloneStore {
       const obsTime = p.timestamp ? new Date(p.timestamp) : generatedAt;
       const confidence = p.detection_confidence ?? 0;
       const aiFix = [lat, lon, obsTime, confidence, p.min_cloud_top_k ?? null, p.max_rain_mmhr ?? null, p.method || null];
+      // Satellite intensity estimate (forecaster/intensity) — null when the model is off or not approved
+      const si = p.satellite_intensity || null;
+      const sat = [si?.wind_kt ?? null, si?.band_kt ?? null, si?.imd_class ?? null, si == null ? null : (si.eye ? 1 : 0)];
 
       let cycloneId = meta.cyclone_id;
       let linked = false;
@@ -47,8 +50,9 @@ class CycloneStore {
         // Attach the satellite analysis to the existing (official) system
         await conn.query(
           `UPDATE cyclones SET ai_fix_lat = ?, ai_fix_lon = ?, ai_fix_time = ?, ai_fix_confidence = ?,
-             ai_min_cloud_top_k = ?, ai_max_rain_mmhr = ?, ai_method = ? WHERE cyclone_id = ?`,
-          [...aiFix, cycloneId]
+             ai_min_cloud_top_k = ?, ai_max_rain_mmhr = ?, ai_method = ?,
+             ai_wind_kt = ?, ai_wind_band_kt = ?, ai_imd_category = ?, ai_eye = ? WHERE cyclone_id = ?`,
+          [...aiFix, ...sat, cycloneId]
         );
       } else {
         const windKnots = p.sustained_wind_knots ?? 0;
@@ -59,8 +63,9 @@ class CycloneStore {
              cyclone_id, cyclone_name, basin, current_lat, current_lon, sustained_wind_kmh, sustained_wind_knots,
              central_pressure_hpa, imd_category, obb_x_center, obb_y_center, obb_width, obb_height, obb_theta,
              detection_confidence, observation_time, inference_generated_at, source, status, summary,
-             ai_fix_lat, ai_fix_lon, ai_fix_time, ai_fix_confidence, ai_min_cloud_top_k, ai_max_rain_mmhr, ai_method)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ai_fix_lat, ai_fix_lon, ai_fix_time, ai_fix_confidence, ai_min_cloud_top_k, ai_max_rain_mmhr, ai_method,
+             ai_wind_kt, ai_wind_band_kt, ai_imd_category, ai_eye)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
              current_lat=VALUES(current_lat), current_lon=VALUES(current_lon),
              sustained_wind_kmh=VALUES(sustained_wind_kmh), sustained_wind_knots=VALUES(sustained_wind_knots),
@@ -71,13 +76,15 @@ class CycloneStore {
              status=VALUES(status), summary=VALUES(summary),
              ai_fix_lat=VALUES(ai_fix_lat), ai_fix_lon=VALUES(ai_fix_lon), ai_fix_time=VALUES(ai_fix_time),
              ai_fix_confidence=VALUES(ai_fix_confidence), ai_min_cloud_top_k=VALUES(ai_min_cloud_top_k),
-             ai_max_rain_mmhr=VALUES(ai_max_rain_mmhr), ai_method=VALUES(ai_method)`,
+             ai_max_rain_mmhr=VALUES(ai_max_rain_mmhr), ai_method=VALUES(ai_method),
+             ai_wind_kt=VALUES(ai_wind_kt), ai_wind_band_kt=VALUES(ai_wind_band_kt),
+             ai_imd_category=VALUES(ai_imd_category), ai_eye=VALUES(ai_eye)`,
           [
             cycloneId, meta.cyclone_name || null, meta.basin, lat, lon, windKmh, windKnots,
             p.central_pressure_hpa ?? 1008, getIMDCategory(windKmh),
             obb.x_center, obb.y_center, obb.width, obb.height, obb.theta,
             confidence, obsTime, generatedAt, source, meta.status || 'watch', p.summary || null,
-            ...aiFix,
+            ...aiFix, ...sat,
           ]
         );
       }

@@ -1,6 +1,6 @@
 # Intensity forecast and rapid-intensification probability — verification
 
-Generated 2026-10-05 13:17 UTC by `python -m forecaster.guidance.intensity_model`.
+Generated 2026-10-05 13:44 UTC by `python -m forecaster.guidance.intensity_model`.
 Mean absolute error of the maximum sustained wind (kt, JTWC 1-minute). Start intensity = JTWC real-time (CARQ).
 Model = gradient-boosted change per lead (inputs: every model's predicted change, trend, latitude, season, land along the track).
 Rule = Phase-1 consensus intensity (current + AIFS/GFS change). Persistence = no change.
@@ -26,6 +26,8 @@ Rule = Phase-1 consensus intensity (current + AIFS/GFS change). Persistence = no
 | 72 h | 14 | **4.8** | 4.6 | 7.9 |
 
 IMD official intensity error, long-period average 2019–23: 7.1 / 10.3 / 13.8 kt at 24 / 48 / 72 h (3-minute wind; indicative).
+
+Tested and left out: sea-surface temperature (NOAA OISST) under the track and the gap to potential intensity (DeMaria–Kaplan) — leave-one-season-out errors changed by −0.4…+1.1 kt and RI skill fell (AUC 0.84 → 0.80).
 
 ## Rapid intensification (≥ 30 kt in 24 h)
 

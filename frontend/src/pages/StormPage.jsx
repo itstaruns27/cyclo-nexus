@@ -250,7 +250,10 @@ export default function StormPage() {
               sub={active ? (d.now.movement ? `${t(lang, 'storm.kpi.movement')} ${d.now.movement.dir} · ${d.now.movement.speed} km/h` : null) : (L.peak ? fmtDT(L.peak.time, lang) : null)} />
             <Kpi icon={Gauge} label={t(lang, active ? 'storm.kpi.nowPressure' : 'storm.kpi.minPressure')}
               value={active ? `${Math.round(d.now.pressure_hpa)} hPa` : L.min_pressure ? `${Math.round(L.min_pressure.hpa)} hPa` : '—'} />
-            <Kpi icon={Award} label={t(lang, active ? 'storm.kpi.nowCat' : 'storm.kpi.peakCat')} value={peakGrade || '—'} sub={catLabel(peakGrade)} />
+            <Kpi icon={Award} label={t(lang, active ? 'storm.kpi.nowCat' : 'storm.kpi.peakCat')} value={peakGrade || '—'}
+              sub={active && d.now.satellite
+                ? <>{catLabel(peakGrade)}<br /><span className="kpi-sat">{fill(t(lang, 'storm.kpi.satEst'), { w: d.now.satellite.wind_kmh, b: d.now.satellite.band_kmh ?? '—', g: d.now.satellite.grade })}</span></>
+                : catLabel(peakGrade)} />
             <Kpi icon={Clock} label={t(lang, 'storm.kpi.duration')}
               value={L.duration_h >= 48 ? `${Math.round(L.duration_h / 24 * 10) / 10} ${t(lang, 'storm.kpi.days')}` : `${L.duration_h} ${t(lang, 'storm.kpi.hours')}`} />
             <Kpi icon={RouteIcon} label={t(lang, 'storm.kpi.distance')} value={`${L.distance_km.toLocaleString(loc(lang))} km`}

@@ -208,7 +208,11 @@ async function activeProfile(id, lang) {
     basin: c.basin || 'NIO', status: c.status, source: c.source, source_url: c.source_url || null,
     is_demo: c.external_id === 'DEMO', observation_time: now.time,
     now: { ...now, wind_kmh: Math.round(Number(c.sustained_wind_kmh)), place: impact.placeLabel(now.lat, now.lon),
-      movement: computeMovement(c.history), detection_confidence: c.detection_confidence == null ? null : Number(c.detection_confidence) },
+      movement: computeMovement(c.history), detection_confidence: c.detection_confidence == null ? null : Number(c.detection_confidence),
+      satellite: c.ai_wind_kt == null ? null : {
+        wind_kmh: Math.round(Number(c.ai_wind_kt) * KMH_PER_KT), band_kmh: c.ai_wind_band_kt == null ? null : Math.round(Number(c.ai_wind_band_kt) * KMH_PER_KT),
+        grade: c.ai_imd_category, eye: c.ai_eye == null ? null : Boolean(c.ai_eye), time: c.ai_fix_time,
+      } },
     life, track: points.map(p => withGale(p)).map(({ kt, ...p }) => p),
     exposure: impact.exposure([nowPt]),
     exposure_forecast: fc.length ? impact.exposure([nowPt, ...fc]) : null,
