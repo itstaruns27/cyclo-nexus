@@ -28,7 +28,7 @@
 | Storm-centred track model (5-model ensemble) | ❌ retired (beaten by NWP guidance) | 48 h: 297 km vs 325 km persistence (−9%) |
 | **AI consensus track + intensity forecast** (ECMWF AIFS + IFS ENS, GFS …) | ✅ verified, wired live (5 Oct) | unseen 2025–26: 58 / 109 / 139 km at 24 / 48 / 72 h vs IMD 72 / 112 / 156 (`docs/guidance_report.md`) |
 | Full-domain ConvLSTM forecaster | ❌ collapsed to a constant output | replaced by the track model; do not use |
-| Intensity classification from imagery | ❌ not built | design in `docs/intensity_classification_plan.md` |
+| Intensity classification from imagery | ✅ built, approved (5 Oct) | CNN + global HURSAT pre-training: test 9.3 kt RMSE, every season 12.2 kt (`docs/intensity_report.md`) |
 | Impact engine (GHS-POP 2020 grid, JTWC quadrant radii, India-view countries) | ✅ | Phailin 1.08 vs 1.32 crore reported |
 | Website: home, alerts, storm pages, past storms, expert panel, 9 languages, offline PWA, CAP 1.2 feed, IMD cone, India official boundaries | ✅ | browser-tested desktop + phone |
 | Tests | ✅ 38 backend + 115 Python | |
@@ -43,7 +43,7 @@
 |---|---|---|---|
 | **Identification**: storms found (≥ D) | Physics detector 57% | YOLO 29–67% | **≥ 70% found, ≤ 5% false-alarm frames, centre error ≤ 60 km** |
 | Early genesis lead time | IMD naming time | not measured | **flag 12–24 h before official Depression** in ≥ 50% of cases |
-| **Classification**: wind error | Dvorak / ADT ≈ 10–15 kt | none | **RMSE ≤ 10–12 kt; exact IMD class ≥ 60%; within one class ≥ 90%** |
+| **Classification**: wind error | Dvorak / ADT ≈ 10–15 kt | ✅ 9.3 kt (2024–25), 12.2 kt all seasons; exact class 50% / within one 89% | **RMSE ≤ 10–12 kt; exact IMD class ≥ 60%; within one class ≥ 90%** |
 | **Prediction**: track, 24 / 48 / 72 h | Persistence 153 / 325 / 513 km; IMD official ≈ 60–90 km at 24 h | ✅ **58 / 109 / 139 km** (AI consensus, unseen 2025–26) | **AI consensus ≈ official: ≤ 90 / 160 / 250 km** |
 | Prediction: intensity, 24 h | Persistence 8.3 kt | ⚠️ 5 kt on weak 2025–26 storms, 10 kt on stronger 2018–24 storms → Phase 2 | **≤ 6–7 kt** |
 | Impact exposure vs reported "affected" | — | within ~×2 | **within ±50% on 6+ documented storms** |
@@ -75,16 +75,16 @@ Work is grouped in phases. Each task lists what it delivers, how it's done, its 
 ### Phase 2 — Classification (IMD 7 classes) (3 days)
 | # | Task | How | Acceptance | Owner |
 |---|---|---|---|---|
-| 2.1 | Intensity estimator | Storm-centred 6-frame CNN regression of wind (kt) + ordinal IMD-class head, from the existing 1,245-frame store (no new download) | RMSE ≤ 12 kt on 2024–25 | Agent (local RTX 4060) |
-| 2.2 | Environment inputs | Satellite SST (GHRSST), ocean heat content (Copernicus Marine), mid-level humidity / shear | intensity 24 h forecast ≤ 7 kt | Agent |
-| 2.3 | Show it on the site | "Satellite intensity estimate" with error bar on storm pages, expert panel and watch areas; official class always primary | browser check | Agent |
-| 2.4 | Rapid-intensification flag | Classifier probability of ≥ 30 kt / 24 h | probability calibration plot in report | Agent |
+| 2.1 | ✅ (CNN + HURSAT-B1 global pre-training; exact-class ≥ 60% not met, shown with ±15 kt) Intensity estimator | Storm-centred 6-frame CNN regression of wind (kt) + ordinal IMD-class head, from the existing 1,245-frame store (no new download) | RMSE ≤ 12 kt on 2024–25 | Agent (local RTX 4060) |
+| 2.2 | ✅ (statistical-dynamical intensity model; SST/OHC tested, no gain) Environment inputs | Satellite SST (GHRSST), ocean heat content (Copernicus Marine), mid-level humidity / shear | intensity 24 h forecast ≤ 7 kt | Agent |
+| 2.3 | ✅ Show it on the site | "Satellite intensity estimate" with error bar on storm pages, expert panel and watch areas; official class always primary | browser check | Agent |
+| 2.4 | ✅ (AUC 0.84) Rapid-intensification flag | Classifier probability of ≥ 30 kt / 24 h | probability calibration plot in report | Agent |
 
 ### Phase 3 — Identification and more training data (3 days, mostly downloads + GPU)
 | # | Task | How | Acceptance | Owner |
 |---|---|---|---|---|
 | 3.1 | More storms | INSAT-3D 2014–2017 frames through the unified builder (~15 GB) | store ≥ 1,800 frames | Agent |
-| 3.2 | Global pretraining | NOAA GridSat-B1 IR storm crops (1980+, ~5–10 GB) → pretrain YOLO + intensity CNN, fine-tune on INSAT | YOLO ≥ 70% found at ≤ 5% false alarms | Agent |
+| 3.2 | ✅ done early for intensity (HURSAT-B1, 1,027 storms); YOLO pre-training still open. Global pretraining | NOAA GridSat-B1 IR storm crops (1980+, ~5–10 GB) → pretrain YOLO + intensity CNN, fine-tune on INSAT | YOLO ≥ 70% found at ≤ 5% false alarms | Agent |
 | 3.3 | Detector fusion | Physics detector score + YOLO box + SST/land gate → one calibrated "watch probability" | beats both detectors alone on 2024–26 | Agent |
 | 3.4 | Genesis lead-time study | Compare first watch time with first IMD Depression time for every 2024–26 system | lead-time histogram in report | Agent |
 | 3.5 | Grad-CAM in the expert panel | explain YOLO / intensity predictions on demand | heat-map shown for active system | Agent |

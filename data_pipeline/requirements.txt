@@ -18,3 +18,4 @@ pydap>=3.4.0             # xarray engine='pydap'
 python-dotenv>=1.0.0     # .env loading in ingestion workers
 tqdm>=4.65.0             # Progress bars
 eccodes>=2.37          # live AI consensus forecast (forecaster/guidance/live.py)
+lightgbm>=4.0            # live intensity forecast + satellite intensity estimate

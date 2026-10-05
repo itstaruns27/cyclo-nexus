@@ -118,19 +118,20 @@ def run_epochs(net, X, y, epochs, lr, batch=128, weights=None):
 
 
 @torch.no_grad()
-def predict(net, X, tta=8):
+def predict(net, X, tta=8, device=None):
+    dev = device or DEV
     net.eval()
     out = []
     Xt = torch.from_numpy(X)
     for i in range(0, len(X), 64):
-        xb = Xt[i:i + 64].to(DEV).float() / 255
+        xb = Xt[i:i + 64].to(dev).float() / 255
         preds = []
         for k in range(tta):                         # rotation test-time augmentation (k = 0: as is)
-            ang = torch.full((len(xb),), 2 * np.pi * k / tta, device=DEV)
+            ang = torch.full((len(xb),), 2 * np.pi * k / tta, device=dev)
             theta = torch.stack([torch.stack([torch.cos(ang), -torch.sin(ang), torch.zeros_like(ang)], 1),
                                  torch.stack([torch.sin(ang), torch.cos(ang), torch.zeros_like(ang)], 1)], 1)
             xr = F.grid_sample(xb, F.affine_grid(theta, xb.shape, align_corners=False), align_corners=False) if k else xb
-            with torch.autocast(DEV, dtype=torch.bfloat16, enabled=DEV == "cuda"):
+            with torch.autocast(dev, dtype=torch.bfloat16, enabled=dev == "cuda"):
                 preds.append(net(xr).float())
         out.append(torch.stack(preds).mean(0).cpu().numpy())
     return np.concatenate(out)

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Wind, Activity, Navigation, Clock, Satellite, CloudRain, AlertOctagon, ExternalLink } from 'lucide-react';
 import { t } from '../i18n/translations';
+import { fill } from '../i18n/strings_site';
 import { useData } from '../context/DataContext';
 import { showDemoBadge } from '../utils/site';
 import { IMD_COLORS, IMD_SCALE, ALERT_COLORS, SOURCE_LABELS, isOfficial, isWatch } from '../types/cyclone';
@@ -93,6 +94,11 @@ export default function CycloneDetails() {
               <span><CloudRain size={12} /> {t(lang, 'panel.peakRain')}</span>
               <strong>{c.ai_max_rain_mmhr != null ? `${Number(c.ai_max_rain_mmhr).toFixed(0)} mm/h` : '—'}</strong>
             </div>
+            {c.ai_wind_kt != null && (
+              <p className="satellite-est">{fill(t(lang, 'storm.kpi.satEst'), {
+                w: Math.round(Number(c.ai_wind_kt) * 1.852), b: c.ai_wind_band_kt != null ? Math.round(Number(c.ai_wind_band_kt) * 1.852) : '—',
+                g: c.ai_imd_category || '—' })}</p>
+            )}
           </div>
         )}
 

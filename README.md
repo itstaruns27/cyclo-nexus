@@ -125,6 +125,8 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 | | YOLO-OBB oriented-box detector (serving pipeline) | ✅ serving · 🔄 retraining on real INSAT imagery |
 | | **AI consensus track + intensity forecast** (ECMWF AIFS + IFS ensemble, GFS, UKMET … fitted on 2018–24, tested on 2025–26: 58 / 109 / 139 km at 24 / 48 / 72 h) | ✅ verified · live behind `AI_FORECAST_ENABLED` |
 | | ConvLSTM + Bi-GRU forecaster and storm-centred image model | ❌ retired from the live path (failed against baselines) |
+| | **Satellite intensity estimate** (CNN + HURSAT-B1 global pre-training: 9.3 kt RMSE on 2024–25, 12.2 kt all seasons) | ✅ verified · live |
+| | **Intensity forecast + rapid-intensification probability** (11.8 kt at 24 h on 2018–24; RI AUC 0.84) | ✅ verified · live |
 | | Grad-CAM explainability | 🔄 module + tests present, not yet in live path |
 | | Forecast cone of uncertainty around the official track (IMD method and radii: 35–350 km at 6–72 h) | ✅ |
 | | AI consensus cone (67% of its own verified errors: 63 / 98 / 171 km at 24 / 48 / 72 h) | ✅ |
@@ -166,6 +168,12 @@ Legend: ✅ working and tested · 🔄 implemented, being trained / calibrated /
 - Verified on storms it never saw: 58 / 109 / 139 km at 24 / 48 / 72 h vs IMD's 72 / 112 / 156 km average
 
 ### 📊 IMD-Compliant Classification
+- **Satellite intensity estimate from INSAT imagery alone** (automated Dvorak-style): a CNN pre-trained on 55,145 NOAA
+  HURSAT-B1 images of 1,027 storms worldwide and fine-tuned on INSAT, blended with a global feature model —
+  **9.3 kt RMSE on unseen 2024–25 storms, 12.2 kt across every season**, IMD class within one step 88–89% of the time
+  ([`docs/intensity_report.md`](docs/intensity_report.md)); shown for official systems and watch areas with a ±15 kt range
+- **Intensity forecast + rapid-intensification chance**: statistical-dynamical model on the guidance models' predicted change and
+  land along the track (24 h error 11.8 kt vs 16.7 kt before; RI ROC AUC 0.84 — [`docs/intensity_forecast_report.md`](docs/intensity_forecast_report.md))
 - All 7 IMD intensity tiers with deterministic classification from wind speed
 - Alert level mapping: 🟡 Yellow (D/DD), 🟠 Orange (CS/SCS), 🔴 Red (VSCS/ESCS/SuCS)
 - Cross-validated against the Pydantic telemetry contract

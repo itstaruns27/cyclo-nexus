@@ -90,3 +90,32 @@ Full tables: [`docs/guidance_report.md`](guidance_report.md) (regenerate with `p
 - **Caveats:** small test sample (29 cases at 48 h, 14 at 72 h); 2025–26 storms were mostly weak, so intensity
   errors are lower than in 2023–24 (10 / 13 / 16 kt at 24 / 48 / 72 h in 2018–24, against IMD's 7 / 10 / 14 kt);
   IMD verifies against its own best track.
+
+## Satellite intensity estimate (IMD class from INSAT imagery) — 5 Oct 2026
+
+Full tables: [`docs/intensity_report.md`](intensity_report.md) (`python -m forecaster.intensity.train fit`).
+
+- **Data:** 1,167 INSAT-3DR/3DS images of 73 North Indian Ocean storms (2018–2025), IMD best-track 3-minute winds;
+  **global pre-training** on NOAA HURSAT-B1: 55,145 images of 1,027 storms worldwide (2004–2015), JTWC/NHC winds.
+- **Method chosen** (leave-one-season-out 2018–23 among 7 options): 50/50 blend of a CNN (pre-trained on HURSAT,
+  fine-tuned on INSAT, rotation test-time augmentation) and a global Dvorak-style feature model, quantile-mapped to IMD wind.
+
+| | RMSE (kt) | Exact IMD class | Within one class |
+|---|---|---|---|
+| **Test 2024–25 (unseen)** | **9.3** | 50% | 89% |
+| Every season, leave-one-season-out | 12.2 | 44% | 88% |
+| Storms ≥ 64 kt (VSCS and stronger) | 17.2 (bias −4 kt) | 47% | 92% |
+| INSAT-only feature model (before pre-training), every season | 17.8 | 34% | 77% |
+
+- Target RMSE ≤ 12 kt on 2024–25: **met**. Published geostationary-IR methods: ≈ 10–16 kt.
+- Exact-class target (≥ 60%) **not met**: IMD classes are narrow (DD spans 6 kt), so the site shows the class with a ±15 kt range
+  (80% of errors), and the official class always comes first.
+- Caveat: 2024–25 had no storm above SCS in IMD's best track; the every-season row is the fairer measure for severe storms.
+
+## Intensity forecast and rapid intensification — 5 Oct 2026
+
+Full tables: [`docs/intensity_forecast_report.md`](intensity_forecast_report.md).
+Statistical-dynamical model (every model's predicted change, trend, land along the track), real-time start intensity:
+leave-one-season-out 2018–24 MAE 11.8 / 18.1 / 23.0 kt at 24 / 48 / 72 h (Phase-1 rule 16.7 / 25.9 / 33.3);
+2025–26 test 4.5 / 7.0 / 4.8 kt. Rapid intensification (≥ 30 kt / 24 h): ROC AUC 0.84, reliable probabilities.
+SST / potential-intensity predictors were tested and left out (no gain).

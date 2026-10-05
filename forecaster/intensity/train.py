@@ -121,11 +121,36 @@ def fit():
             return np.c_[np.ones(len(te)), te[cols].fillna(tr[cols].median())] @ coef
         return f
 
+    def qmap(col):
+        """Quantile mapping (CDF matching) of one predictor onto the training winds — keeps the extremes,
+        unlike a least-squares fit, which pulls strong storms towards the mean."""
+        def f(tr, te):
+            q = np.linspace(0, 100, 101)
+            src, dst = np.percentile(tr[col].dropna(), q), np.percentile(tr.wind_kt, q)
+            return np.interp(te[col].fillna(tr[col].median()), src, dst)
+        return f
+
+    cnn_oof = TRAIN / "intensity_cnn_oof.csv"
+    if cnn_oof.exists():
+        c = pd.read_csv(cnn_oof)[["frame", "sid", "cnn_kt"]]
+        df = df.merge(c, on=["frame", "sid"], how="left")
     variants = {"INSAT features (LightGBM)": gbm(base),
                 "3-feature linear (Dvorak-like)": linear(["tb_ring_25_50", "eye_contrast", "cold213_100"])}
+    kinds = {"INSAT features (LightGBM)": ("gbm", base), "3-feature linear (Dvorak-like)": ("linear", ["tb_ring_25_50", "eye_contrast", "cold213_100"])}
     if gcols:
         variants["INSAT + global pre-trained model (LightGBM)"] = gbm(base + ["global_ir_kt"])
         variants["Global model, calibrated to IMD (linear)"] = linear(["global_ir_kt"])
+        variants["Global model, quantile-mapped to IMD"] = qmap("global_ir_kt")
+        kinds.update({"INSAT + global pre-trained model (LightGBM)": ("gbm", base + ["global_ir_kt"]),
+                      "Global model, calibrated to IMD (linear)": ("linear", ["global_ir_kt"]),
+                      "Global model, quantile-mapped to IMD": ("qmap", "global_ir_kt")})
+    if "cnn_kt" in df:
+        variants["CNN (HURSAT pre-trained, INSAT fine-tuned)"] = qmap("cnn_kt")
+        kinds["CNN (HURSAT pre-trained, INSAT fine-tuned)"] = ("qmap", "cnn_kt")
+        if gcols:
+            df["blend_kt"] = 0.5 * df["cnn_kt"] + 0.5 * df["global_ir_kt"]
+            variants["Blend: CNN + global model, quantile-mapped"] = qmap("blend_kt")
+            kinds["Blend: CNN + global model, quantile-mapped"] = ("qmap", "blend_kt")
 
     def loso(fn, seasons):
         """Leave-one-season-out predictions (unjittered images) over `seasons`."""
@@ -158,17 +183,29 @@ def fit():
     for y, q in zip(allcv.y, allcv.p):
         conf[imd_class(y), imd_class(q)] += 1
 
-    # Final model: chosen variant on every season (deployment)
-    cols = base + (["global_ir_kt"] if "global" in best.lower() and "LightGBM" in best else [])
-    if "linear" in best:
-        cols = ["global_ir_kt"]
-    final = lgb.train(P, lgb.Dataset(df[cols], df.wind_kt, weight=balanced(df)), ROUNDS)
-    MODEL.parent.mkdir(parents=True, exist_ok=True)
-    final.save_model(str(MODEL))
+    # Final model: chosen variant fitted on every season (deployment)
+    kind, arg = kinds[best]
+    deploy = {"kind": kind}
+    if kind == "gbm":
+        cols = arg
+        final = lgb.train(P, lgb.Dataset(df[cols], df.wind_kt, weight=balanced(df)), ROUNDS)
+        MODEL.parent.mkdir(parents=True, exist_ok=True)
+        final.save_model(str(MODEL))
+    elif kind == "linear":
+        cols = arg
+        A = np.c_[np.ones(len(df)), df[cols].fillna(df[cols].median())]
+        coef, *_ = np.linalg.lstsq(A, df.wind_kt, rcond=None)
+        deploy.update(cols=cols, coef=[float(v) for v in coef], fill=[float(v) for v in df[cols].median()])
+    else:
+        cols = [arg]
+        q = np.linspace(0, 100, 101)
+        deploy.update(col=arg, src=[float(v) for v in np.percentile(df[arg].dropna(), q)],
+                      dst=[float(v) for v in np.percentile(df.wind_kt, q)])
     tb = test[best]
     approved = bool(tb["rmse"] <= 12.0 and cv_m[best]["rmse"] < cv_m["3-feature linear (Dvorak-like)"]["rmse"])
     META.write_text(json.dumps({
-        "features": cols, "global_features": gcols if "global_ir_kt" in cols else None, "variant": best,
+        "features": cols, "global_features": gcols, "variant": best, "deploy": deploy,
+        "uses": sorted({c for c in cols if c in ("global_ir_kt", "cnn_kt", "blend_kt")}),
         "trained": datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"), "train_seasons": "all (2018–2025) for deployment",
         "cv_2018_2023": cv_m[best], "test_2024_25": tb, "loso_all": metrics(allcv.y, allcv.p), "loso_strong": s_m,
         "error_band_kt_80": round(band, 1), "global": glob_info, "approved": approved,
@@ -196,6 +233,9 @@ def fit():
         "",
         "## Model selection — leave-one-season-out, 2018–2023", "", *head, *[row(k, v) for k, v in cv_m.items()], "",
         f"Chosen: **{best}**.", "",
+        "CNN rows: out-of-fold predictions from leave-one-season-out over all 2018–25 seasons "
+        "(`python -m forecaster.intensity.cnn cv`), so in this 2018–23 table each CNN fold had also seen 2024–25 — "
+        "the 2024–25 test and the every-season table below never include the scored season in training.", "",
         f"## Test seasons 2024–25 (scored once; {len(te0)} images: {test_storms})", "", *head, *[row(k, v) for k, v in test.items()], "",
         "Note: 2024–25 had no storm above Severe Cyclonic Storm in IMD's best track, so the test is weak-storm heavy.",
         "",

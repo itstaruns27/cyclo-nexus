@@ -421,3 +421,4 @@ a.impact-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md);
   background: linear-gradient(90deg, #00c8ff 0%, #00e060 25%, #fff000 50%, #ff7a00 70%, #ff0000 85%, #ff00ff 100%); }
 .rain-scale b { font-weight: 600; font-size: 0.72rem; }
 .rain-key small { color: #94a3b8; line-height: 1.4; }
+.satellite-est, .wc-sat { margin: 6px 0 0; font-size: 0.8rem; color: #0d9488; font-weight: 500; }

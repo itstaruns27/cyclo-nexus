@@ -5,6 +5,7 @@ import {
   ArrowRight, ExternalLink, Phone, FileCode2, Rss, Clock,
 } from 'lucide-react';
 import { t } from '../i18n/translations';
+import { fill } from '../i18n/strings_site';
 import { useData } from '../context/DataContext';
 import { api, API_BASE } from '../services/api';
 import { ALERT_COLORS, IMD_COLORS, IMD_SCALE, isOfficial, isWatch } from '../types/cyclone';
@@ -77,6 +78,11 @@ function WatchCard({ adv, sys, lang }) {
       <div>
         <h3>{t(lang, 'alertsX.watchTitle')} · {fmtObs(adv.observation_time, lang)} {showDemoBadge(sys) && <span className="chip demo">{t(lang, 'storm.demo')}</span>}</h3>
         <p>{adv.threat_summary}</p>
+        {sys?.ai_wind_kt != null && (
+          <p className="wc-sat">{fill(t(lang, 'storm.kpi.satEst'), {
+            w: Math.round(Number(sys.ai_wind_kt) * 1.852), b: sys.ai_wind_band_kt != null ? Math.round(Number(sys.ai_wind_band_kt) * 1.852) : '—',
+            g: sys.ai_imd_category || '—' })}</p>
+        )}
         <p className="muted-small">{t(lang, 'alertsX.watchText')}</p>
       </div>
       <Link className="btn-ghost sm" to={`/storm/${encodeURIComponent(adv.cyclone_id)}`}>{t(lang, 'alertsX.details')}</Link>
